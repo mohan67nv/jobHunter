@@ -35,12 +35,12 @@ apscheduler==3.10.4
 
 # Notifications
 aiosmtplib==3.0.1
-python-telegram-bot==20.7
+python-telegram-bot>=20.0
 
 # Utilities
 pydantic==2.5.3
 pydantic-settings==2.1.0
-httpx==0.26.0
+httpx>=0.23.0,<1.0.0
 aiofiles==23.2.1
 
 # Testing
