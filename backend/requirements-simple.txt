@@ -1,0 +1,28 @@
+# Ultra-simple requirements - NO C compiler needed!
+# These are pre-built wheels that work on any system
+
+# Web Framework (pure Python)
+fastapi==0.108.0
+uvicorn==0.25.0
+python-multipart==0.0.6
+python-dotenv==1.0.0
+
+# Database (pure Python)
+sqlalchemy==2.0.25
+
+# Web scraping (pure Python)
+beautifulsoup4==4.12.2
+requests==2.31.0
+html5lib==1.1
+
+# AI - Gemini (pure Python)
+google-generativeai==0.3.2
+
+# Utilities (pure Python)
+httpx==0.26.0
+
+# File processing (pure Python)
+PyPDF2==3.0.1
+
+# Scheduling (pure Python)
+apscheduler==3.10.4

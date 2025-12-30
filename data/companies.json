@@ -1,0 +1,63 @@
+[
+  {
+    "name": "SAP",
+    "career_url": "https://jobs.sap.com/search/",
+    "industry": "Enterprise Software",
+    "size": "100000+",
+    "locations": ["Walldorf", "Berlin", "Munich"]
+  },
+  {
+    "name": "BMW Group",
+    "career_url": "https://www.bmwgroup.jobs/",
+    "industry": "Automotive",
+    "size": "100000+"
+  },
+  {
+    "name": "Siemens",
+    "career_url": "https://jobs.siemens.com/careers",
+    "industry": "Industrial Technology",
+    "size": "100000+"
+  },
+  {
+    "name": "Deutsche Bank",
+    "career_url": "https://careers.db.com/",
+    "industry": "Banking",
+    "size": "50000-100000"
+  },
+  {
+    "name": "Allianz",
+    "career_url": "https://careers.allianz.com/",
+    "industry": "Insurance",
+    "size": "100000+"
+  },
+  {
+    "name": "Volkswagen",
+    "career_url": "https://www.volkswagen-careers.de/",
+    "industry": "Automotive",
+    "size": "100000+"
+  },
+  {
+    "name": "Mercedes-Benz",
+    "career_url": "https://www.mercedes-benz.com/en/career/",
+    "industry": "Automotive",
+    "size": "100000+"
+  },
+  {
+    "name": "Bosch",
+    "career_url": "https://www.bosch.com/careers/",
+    "industry": "Engineering",
+    "size": "100000+"
+  },
+  {
+    "name": "Adidas",
+    "career_url": "https://careers.adidas-group.com/",
+    "industry": "Sportswear",
+    "size": "50000-100000"
+  },
+  {
+    "name": "BASF",
+    "career_url": "https://www.basf.com/global/en/careers.html",
+    "industry": "Chemicals",
+    "size": "100000+"
+  }
+]

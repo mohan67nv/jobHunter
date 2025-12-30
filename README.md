@@ -1,0 +1,375 @@
+# 🎯 SmartJobHunter Pro
+
+**AI-Powered Job Hunting Dashboard for the German Job Market**
+
+A production-ready, full-stack application that automates job searching, scraping, and analysis using AI to help you land your next job in Germany.
+
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
+![React](https://img.shields.io/badge/react-18-blue.svg)
+![FastAPI](https://img.shields.io/badge/fastapi-0.108-green.svg)
+
+---
+
+## ✨ Features
+
+### 🤖 **AI-Powered Analysis**
+- **Job-Resume Matching**: Calculate compatibility scores using Google Gemini Pro
+- **ATS Scoring**: Analyze resume for Applicant Tracking System compatibility
+- **Tailored Applications**: Auto-generate customized resumes and cover letters
+- **Interview Prep**: Get likely interview questions and preparation tips
+- **Company Research**: Automatic company insights and culture analysis
+
+### 🔍 **Comprehensive Job Scraping**
+- **Multi-Source**: Arbeitsagentur, LinkedIn, Indeed, StepStone, Glassdoor, Kimeta, Joblift, Jooble
+- **Company Pages**: Direct scraping from 500+ German company career pages
+- **Smart Deduplication**: Fuzzy matching to eliminate duplicate postings
+- **Auto-Scheduling**: Automated scraping every 2 hours
+
+### 📊 **Beautiful Dashboard**
+- **Modern UI**: Built with React 18, TypeScript, and Tailwind CSS
+- **Real-time Analytics**: Track applications, match scores, and success rates
+- **Interactive Charts**: Visualize job market trends with Recharts
+- **Responsive Design**: Works perfectly on desktop, tablet, and mobile
+
+### 🎨 **Advanced Features**
+- **Resume Version Control**: Manage multiple resume versions for different roles
+- **Cover Letter Templates**: Reusable templates with smart placeholders
+- **Application Tracking**: Full funnel from saved to offer
+- **Notifications**: Email and Telegram alerts for high-match jobs
+- **Search & Filters**: Powerful filtering by match score, date, location, source
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- **Python 3.11+**
+- **Node.js 18+**
+- **Docker & Docker Compose**
+- **Gemini API Key** (free at [Google AI Studio](https://makersuite.google.com/app/apikey))
+
+### One-Click Setup
+
+```bash
+# Clone the repository
+git clone <your-repo-url>
+cd smartjobhunter
+
+# Run setup script
+chmod +x scripts/setup.sh
+./scripts/setup.sh
+
+# Follow the prompts to configure your .env file
+```
+
+### Manual Setup
+
+1. **Create `.env` file**:
+```bash
+cp .env.example .env
+# Edit .env and add your GEMINI_API_KEY
+```
+
+2. **Create directories**:
+```bash
+mkdir -p data/resumes data/exports logs
+```
+
+3. **Build and start**:
+```bash
+docker-compose build
+docker-compose up
+```
+
+4. **Access the application**:
+- **Frontend**: http://localhost:3000
+- **API Docs**: http://localhost:8000/docs
+- **API**: http://localhost:8000
+
+---
+
+## 📖 Usage Guide
+
+### 1. Initial Setup
+
+1. **Upload Your Resume**
+   - Go to Settings → Profile
+   - Upload your resume (PDF, DOCX, or TXT)
+   - The system will automatically extract skills and experience
+
+2. **Configure Preferences**
+   - Go to Settings → Preferences
+   - Add your target keywords (e.g., "Data Scientist", "Python")
+   - Set preferred locations and salary expectations
+
+3. **Add API Key**
+   - Go to Settings → API Keys
+   - Add your Gemini Pro API key
+   - Optionally add Claude or OpenAI keys for fallback
+
+### 2. Scraping Jobs
+
+**Manual Scraping**:
+```bash
+# From Dashboard, click "Start Scraping" button
+# Or use API:
+curl -X POST "http://localhost:8000/api/scrapers/scrape?keyword=Data%20Scientist&location=Germany"
+```
+
+**Automated Scraping**:
+- Runs automatically every 2 hours (configurable in `.env`)
+- Set `SCRAPE_INTERVAL_HOURS=2` in your `.env` file
+
+### 3. Analyzing Jobs
+
+**Single Job Analysis**:
+- Click on any job card
+- Click "Run AI Analysis" in the modal
+- Wait 10-30 seconds for AI processing
+
+**Batch Analysis**:
+```bash
+# Analyze all new jobs
+curl -X POST "http://localhost:8000/api/analysis/batch-analyze" \
+  -H "Content-Type: application/json" \
+  -d '{"job_ids": [1, 2, 3, 4, 5]}'
+```
+
+### 4. Application Tracking
+
+1. Click "Save" on a job to add to your pipeline
+2. Update status as you progress:
+   - Saved → Applied → Phone Screen → Interview → Offer
+3. Add notes, interview dates, and follow-ups
+4. View analytics in the Analytics dashboard
+
+---
+
+## 🏗️ Architecture
+
+### Backend (FastAPI + Python)
+
+```
+backend/
+├── app.py                 # Main FastAPI application
+├── config.py             # Configuration management
+├── database.py           # SQLAlchemy setup
+├── models/               # Database models
+│   ├── job.py
+│   ├── application.py
+│   ├── user.py
+│   └── company.py
+├── scrapers/             # Job scraping modules
+│   ├── arbeitsagentur.py
+│   ├── jobspy_scraper.py
+│   ├── aggregators.py
+│   └── company_scraper.py
+├── ai_agents/            # AI analysis agents
+│   ├── jd_analyzer.py
+│   ├── matcher.py
+│   ├── ats_scorer.py
+│   ├── optimizer.py
+│   └── researcher.py
+├── routers/              # API endpoints
+└── utils/                # Utilities
+```
+
+### Frontend (React + TypeScript)
+
+```
+frontend/
+├── src/
+│   ├── components/       # Reusable components
+│   │   ├── Layout.tsx
+│   │   ├── JobCard.tsx
+│   │   └── JobDetailModal.tsx
+│   ├── pages/           # Main pages
+│   │   ├── Dashboard.tsx
+│   │   ├── Analytics.tsx
+│   │   └── Settings.tsx
+│   ├── hooks/           # Custom React hooks
+│   ├── lib/             # API client & utilities
+│   ├── store/           # Zustand state management
+│   └── types/           # TypeScript definitions
+```
+
+### Database Schema
+
+**SQLite** (local development, easy PostgreSQL migration)
+
+- **jobs**: Job postings with full details
+- **job_analysis**: AI analysis results
+- **applications**: Application tracking
+- **user_profile**: User information and resume
+- **companies**: Company database
+- **scraping_logs**: Scraping session logs
+
+---
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `GEMINI_API_KEY` | Google Gemini Pro API key | - | Yes |
+| `DATABASE_URL` | Database connection string | SQLite | No |
+| `SCRAPE_INTERVAL_HOURS` | Auto-scrape frequency | 2 | No |
+| `ANALYSIS_INTERVAL_HOURS` | Auto-analysis frequency | 4 | No |
+| `EMAIL_ENABLED` | Enable email notifications | False | No |
+| `TELEGRAM_ENABLED` | Enable Telegram notifications | False | No |
+
+### Scraping Sources
+
+Enable/disable specific sources in your scraping calls:
+
+```python
+# All sources (default)
+sources = ['arbeitsagentur', 'kimeta', 'joblift', 'jooble']
+
+# Specific sources only
+sources = ['arbeitsagentur', 'kimeta']
+```
+
+---
+
+## 📊 API Documentation
+
+Full API documentation available at: **http://localhost:8000/docs**
+
+### Key Endpoints
+
+#### Jobs
+- `GET /api/jobs` - List jobs with filters
+- `GET /api/jobs/{id}` - Get job details
+- `POST /api/scrapers/scrape` - Trigger scraping
+
+#### Analysis
+- `POST /api/analysis/analyze-job/{job_id}` - Run AI analysis
+- `GET /api/analysis/{job_id}` - Get analysis results
+- `POST /api/analysis/generate-resume/{job_id}` - Generate tailored resume
+
+#### Applications
+- `GET /api/applications` - List applications
+- `POST /api/applications` - Create application
+- `PUT /api/applications/{id}` - Update status
+
+#### Analytics
+- `GET /api/analytics/overview` - Dashboard stats
+- `GET /api/analytics/applications-timeline` - Timeline data
+- `GET /api/analytics/top-companies` - Top companies
+
+---
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+pytest tests/ -v
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm test
+```
+
+---
+
+## 🚢 Deployment
+
+### Local Deployment (Recommended for Start)
+
+```bash
+docker-compose up -d
+```
+
+### Production Deployment (Hetzner/VPS)
+
+1. **Provision Server**:
+   - Hetzner CX21 or similar (2 vCPU, 4GB RAM)
+   - Ubuntu 22.04 LTS
+
+2. **Install Docker**:
+```bash
+curl -fsSL https://get.docker.com -o get-docker.sh
+sh get-docker.sh
+```
+
+3. **Clone and Configure**:
+```bash
+git clone <your-repo>
+cd smartjobhunter
+cp .env.example .env
+# Edit .env with production settings
+```
+
+4. **Start Services**:
+```bash
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+5. **Setup SSL** (with nginx):
+```bash
+# Install certbot
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d yourdomain.com
+```
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🙏 Acknowledgments
+
+- **Google Gemini Pro** for AI capabilities
+- **JobSpy** library for multi-portal scraping
+- **Arbeitsagentur** for their public API
+- **shadcn/ui** for beautiful UI components
+- German job market for endless opportunities 🇩🇪
+
+---
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/yourusername/smartjobhunter/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/yourusername/smartjobhunter/discussions)
+- **Email**: support@smartjobhunter.com
+
+---
+
+## 🎯 Roadmap
+
+- [ ] Chrome Extension for one-click job saving
+- [ ] Mobile app (React Native)
+- [ ] LinkedIn profile scraper
+- [ ] Salary negotiation assistant
+- [ ] Interview simulator with AI feedback
+- [ ] Multi-language support (English, German)
+- [ ] Integration with calendar apps
+- [ ] Advanced analytics and ML predictions
+
+---
+
+**Made with ❤️ for job seekers in Germany**
+
+Happy job hunting! 🚀

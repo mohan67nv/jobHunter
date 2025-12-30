@@ -1,0 +1,80 @@
+services:
+  backend:
+    build: ./backend
+    container_name: jobhunter_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=sqlite:////app/data/jobhunter.db
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SECRET_KEY=${SECRET_KEY}
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-True}
+      - USER_AGENT=${USER_AGENT}
+      - SCRAPE_DELAY_MIN=${SCRAPE_DELAY_MIN:-2}
+      - SCRAPE_DELAY_MAX=${SCRAPE_DELAY_MAX:-5}
+      - MAX_JOBS_PER_SOURCE=${MAX_JOBS_PER_SOURCE:-500}
+      - SCRAPE_INTERVAL_HOURS=${SCRAPE_INTERVAL_HOURS:-2}
+      - ANALYSIS_INTERVAL_HOURS=${ANALYSIS_INTERVAL_HOURS:-4}
+      - EMAIL_ENABLED=${EMAIL_ENABLED:-False}
+      - EMAIL_HOST=${EMAIL_HOST}
+      - EMAIL_PORT=${EMAIL_PORT:-587}
+      - EMAIL_USER=${EMAIL_USER}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM}
+      - TELEGRAM_ENABLED=${TELEGRAM_ENABLED:-False}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID}
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+      - ./backend:/app  # Hot reload for development
+    command: uvicorn app:app --host 0.0.0.0 --port 8000 --reload
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build: ./frontend
+    container_name: jobhunter_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    volumes:
+      - ./frontend/src:/app/src  # Hot reload
+      - ./frontend/public:/app/public
+    command: npm run dev -- --host 0.0.0.0
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # Optional: Uncomment for production PostgreSQL
+  # db:
+  #   image: postgres:16-alpine
+  #   container_name: jobhunter_db
+  #   environment:
+  #     POSTGRES_USER: jobhunter
+  #     POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #     POSTGRES_DB: jobhunter
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   ports:
+  #     - "5432:5432"
+  #   restart: unless-stopped
+
+  # Optional: Redis for caching
+  # redis:
+  #   image: redis:7-alpine
+  #   container_name: jobhunter_redis
+  #   ports:
+  #     - "6379:6379"
+  #   restart: unless-stopped
+
+# volumes:
+#   postgres_data:
