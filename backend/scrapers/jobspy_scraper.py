@@ -16,7 +16,8 @@ except ImportError:
 class JobSpyScraper(BaseScraper):
     """Scraper using JobSpy library for multiple job portals"""
     
-    SUPPORTED_SITES = ["linkedin", "indeed", "stepstone", "glassdoor"]
+    # JobSpy v1.1.37 only reliably supports LinkedIn (Indeed/Glassdoor blocked by 403)
+    SUPPORTED_SITES = ["linkedin"]
     
     def __init__(self):
         super().__init__()

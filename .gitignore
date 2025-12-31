@@ -1,0 +1,102 @@
+# Environment variables and API keys
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+config.local.py
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+data/jobhunter.db
+data/*.db
+
+# Documentation archive (old setup files)
+docs/archive/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+*.log
+backend/jobHunter/
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+backend/jobHunter/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Frontend build
+frontend/dist/
+frontend/build/
+frontend/.vite/
+frontend/.next/
+
+# Logs
+logs/
+*.log
+backend/logs/
+frontend/logs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Docker
+docker-compose.override.yml
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Sensitive data
+companies.json
+*.csv
+backup/
+dumps/

@@ -14,6 +14,7 @@ from scrapers.jobspy_scraper import JobSpyScraper
 from scrapers.aggregators import KimetaScraper, JobliftScraper, JoobleScraper
 from scrapers.company_scraper import CompanyScraper
 from scrapers.german_job_boards import StepStoneScraper, XINGJobsScraper, MonsterDeScraper, FinestJobsScraper
+from scrapers.ai_scraper import AIIndeedScraper, AIStepStoneScraper, AIGlassdoorScraper, AIMonsterScraper
 from utils.deduplicator import Deduplicator
 from utils.logger import setup_logger
 
@@ -33,17 +34,28 @@ class ScraperManager:
         self.db = db
         self.deduplicator = Deduplicator(db)
         
-        # Initialize all scrapers (German boards + aggregators)
+        # Initialize all scrapers - Mix of JobSpy, AI-powered, and traditional scrapers
         self.scrapers = {
+            # JobSpy - LinkedIn only (Indeed/Glassdoor blocked by 403)
+            'jobspy': JobSpyScraper(),
+            
+            # AI-powered scrapers (bypass anti-scraping with Perplexity AI)
+            'indeed': AIIndeedScraper(provider='perplexity'),
+            'stepstone_ai': AIStepStoneScraper(provider='perplexity'),
+            'glassdoor': AIGlassdoorScraper(provider='perplexity'),
+            'monster_ai': AIMonsterScraper(provider='perplexity'),
+            
+            # German job boards (template scrapers)
             'arbeitsagentur': ArbeitsagenturScraper(),
-            'jobspy': JobSpyScraper(),  # Indeed, LinkedIn, Glassdoor, ZipRecruiter
-            'kimeta': KimetaScraper(),  # Meta-aggregator (2000+ sources)
-            'joblift': JobliftScraper(),  # Meta-aggregator (4000+ sources)
-            'jooble': JoobleScraper(),  # Aggregator
-            'stepstone': StepStoneScraper(),  # Premium German board
-            'xing': XINGJobsScraper(),  # German professional network
-            'monster': MonsterDeScraper(),  # Traditional board
-            'finest': FinestJobsScraper(),  # Direct company postings
+            'xing': XINGJobsScraper(),
+            'finest': FinestJobsScraper(),
+            
+            # Aggregators (2000-4000+ sources each)
+            'kimeta': KimetaScraper(),
+            'joblift': JobliftScraper(),
+            'jooble': JoobleScraper(),
+            
+            # Company scraper
             'company': CompanyScraper(),
         }
     
@@ -62,17 +74,19 @@ class ScraperManager:
         """
         logger.info(f"🚀 Starting scraping for '{keyword}' in '{location}'")
         
-        # Default to major German boards + aggregators for comprehensive coverage
+        # Default sources: JobSpy (LinkedIn) + AI scrapers + German boards
         if sources is None or sources == ['all']:
             sources = [
-                'jobspy',  # LinkedIn, Indeed, Glassdoor (100+ jobs)
-                'kimeta',  # Meta-aggregator (covers 2000+ sources)
-                'joblift',  # Meta-aggregator (covers 4000+ sources)
+                'jobspy',  # LinkedIn via JobSpy
+                'indeed',  # Indeed via AI (Perplexity)
+                'glassdoor',  # Glassdoor via AI (Perplexity)
+                'stepstone_ai',  # StepStone via AI (Perplexity)
+                'monster_ai',  # Monster via AI (Perplexity)
                 'arbeitsagentur',  # German federal agency
-                'stepstone',  # Premium German board
                 'xing',  # German professional network
-                'monster',  # Traditional board
                 'finest',  # Direct company postings
+                'kimeta',  # Meta-aggregator (2000+ sources)
+                'joblift',  # Meta-aggregator (4000+ sources)
             ]
         
         all_jobs = []
@@ -95,10 +109,10 @@ class ScraperManager:
                 
                 logger.info(f"📡 Scraping {source}...")
                 
-                # Handle JobSpy separately (multiple sites)
+                # Handle JobSpy separately - LinkedIn only (Indeed/Glassdoor blocked by 403, StepStone unsupported)
                 if source == 'jobspy':
                     jobs = scraper.scrape(keyword, location, 
-                                         sites=['linkedin', 'indeed', 'stepstone', 'glassdoor'],
+                                         sites=['linkedin'],
                                          results_wanted=100)
                 else:
                     jobs = scraper.scrape(keyword, location)
