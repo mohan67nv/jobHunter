@@ -4,10 +4,15 @@ Generates tailored resumes and cover letters
 """
 from typing import Dict, List
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 
 
 class ApplicationOptimizer(BaseAgent):
     """Optimizes resume and generates tailored application materials"""
+    
+    def __init__(self):
+        config = get_model_config("ApplicationOptimizer")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
     
     def generate_tailored_resume(self, resume_text: str, job_description: str, 
                                  match_analysis: Dict) -> str:

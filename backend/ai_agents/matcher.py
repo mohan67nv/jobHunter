@@ -4,10 +4,15 @@ Calculates match score and identifies skill gaps
 """
 from typing import Dict, List
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 
 
 class ResumeMatcher(BaseAgent):
     """Matches resume to job requirements and calculates compatibility"""
+    
+    def __init__(self):
+        config = get_model_config("ResumeMatcher")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
     
     def process(self, resume_text: str, job_description: str, jd_analysis: Dict) -> Dict:
         """

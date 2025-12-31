@@ -26,16 +26,16 @@ class AgentManager:
         
         Args:
             db: Database session
-            preferred_provider: Preferred AI provider (default: openai using gpt-5-mini)
+            preferred_provider: Preferred AI provider (models selected from model_config.py)
         """
         self.db = db
         
-        # Initialize all agents with gpt-5-mini as default
-        self.analyzer = JDAnalyzer(preferred_provider)
-        self.matcher = JobMatcher(preferred_provider)
-        self.ats_scorer = EnhancedATSScorer()  # Uses gpt-5-mini
-        self.optimizer = ApplicationOptimizer(preferred_provider)
-        self.researcher = CompanyResearcher(preferred_provider)
+        # Initialize all agents - each uses optimal model from model_config.py
+        self.analyzer = JDAnalyzer()              # DeepSeek Coder - fast parsing
+        self.matcher = ResumeMatcher()            # DeepSeek Chat - matching
+        self.ats_scorer = EnhancedATSScorer()     # DeepSeek Chat - ATS scoring
+        self.optimizer = ApplicationOptimizer()   # DeepSeek Coder - optimization
+        self.researcher = CompanyResearcher()     # GPT-5-mini - research
     
     def analyze_job(self, job_id: int, generate_materials: bool = True) -> Optional[JobAnalysis]:
         """

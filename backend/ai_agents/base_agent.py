@@ -47,14 +47,16 @@ except ImportError:
 class BaseAgent(ABC):
     """Abstract base class for AI agents"""
     
-    def __init__(self, preferred_provider: str = "perplexity"):
+    def __init__(self, preferred_provider: str = "openai", model: str = "gpt-5-mini"):
         """
         Initialize AI agent
         
         Args:
-            preferred_provider: Preferred AI provider (perplexity, gemini, claude, openai)
+            preferred_provider: Preferred AI provider (deepseek, openai, gemini, claude, perplexity)
+            model: Model name to use (e.g., deepseek-chat, gpt-5-mini)
         """
         self.preferred_provider = preferred_provider
+        self.model = model
         self.providers = self._initialize_providers()
         
         if not self.providers:
@@ -64,14 +66,25 @@ class BaseAgent(ABC):
         """Initialize available AI providers"""
         providers = {}
         
-        # Perplexity (PRIMARY - fast and reliable for AI analysis)
+        # DeepSeek (PRIMARY for most tasks - cost-effective and powerful)
+        if OPENAI_AVAILABLE and settings.deepseek_api_key:
+            try:
+                providers['deepseek'] = OpenAI(
+                    api_key=settings.deepseek_api_key,
+                    base_url="https://api.deepseek.com"
+                )
+                logger.info("✅ DeepSeek initialized (Primary provider)")
+            except Exception as e:
+                logger.error(f"Failed to initialize DeepSeek: {e}")
+        
+        # Perplexity
         if PERPLEXITY_AVAILABLE and settings.perplexity_api_key:
             try:
                 providers['perplexity'] = PerplexityClient(
                     api_key=settings.perplexity_api_key,
                     base_url="https://api.perplexity.ai"
                 )
-                logger.info("✅ Perplexity AI initialized (Primary provider)")
+                logger.info("✅ Perplexity AI initialized")
             except TypeError as e:
                 # Handle proxies parameter issue in older OpenAI client versions
                 try:
@@ -82,13 +95,13 @@ class BaseAgent(ABC):
                         base_url="https://api.perplexity.ai",
                         http_client=http_client
                     )
-                    logger.info("✅ Perplexity AI initialized (Primary provider - with custom client)")
+                    logger.info("✅ Perplexity AI initialized (with custom client)")
                 except Exception as e2:
                     logger.error(f"Failed to initialize Perplexity: {e2}")
             except Exception as e:
                 logger.error(f"Failed to initialize Perplexity: {e}")
         
-        # Gemini (FALLBACK for ATS analysis)
+        # Gemini (FALLBACK)
         if GEMINI_AVAILABLE and settings.gemini_api_key:
             try:
                 if not GEMINI_LEGACY:
@@ -114,12 +127,11 @@ class BaseAgent(ABC):
             except Exception as e:
                 logger.error(f"Failed to initialize Claude: {e}")
         
-        # OpenAI (GPT-5 Mini for ATS scoring)
+        # OpenAI (GPT-5-mini for knowledge-heavy tasks)
         if OPENAI_AVAILABLE and settings.openai_api_key:
             try:
                 providers['openai'] = OpenAI(api_key=settings.openai_api_key)
-                providers['openai_model'] = 'gpt-5-mini'  # Latest GPT-5 Mini model
-                logger.info("✅ OpenAI GPT-5 Mini initialized (ATS scoring)")
+                logger.info("✅ OpenAI GPT-5-mini initialized")
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI: {e}")
         
@@ -158,7 +170,9 @@ class BaseAgent(ABC):
                      temperature: float, max_tokens: int) -> Optional[str]:
         """Try to generate response with specific provider"""
         try:
-            if provider_name == 'perplexity':
+            if provider_name == 'deepseek':
+                return self._generate_deepseek(prompt, temperature, max_tokens)
+            elif provider_name == 'perplexity':
                 return self._generate_perplexity(prompt, temperature, max_tokens)
             elif provider_name == 'gemini':
                 return self._generate_gemini(prompt, temperature, max_tokens)
@@ -169,6 +183,22 @@ class BaseAgent(ABC):
         except Exception as e:
             logger.error(f"Error with {provider_name}: {e}")
             return None
+    
+    def _generate_deepseek(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        """Generate response using DeepSeek"""
+        client = self.providers['deepseek']
+        
+        response = client.chat.completions.create(
+            model=self.model,  # deepseek-chat or deepseek-coder
+            messages=[
+                {"role": "system", "content": "You are a helpful AI assistant specialized in job analysis, ATS optimization, and resume matching. Always respond with valid JSON when requested."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens
+        )
+        
+        return response.choices[0].message.content
     
     def _generate_perplexity(self, prompt: str, temperature: float, max_tokens: int) -> str:
         """Generate response using Perplexity AI"""
@@ -230,12 +260,11 @@ class BaseAgent(ABC):
         return message.content[0].text
     
     def _generate_openai(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        """Generate response using OpenAI (GPT-4o-mini or GPT-5 mini)"""
+        """Generate response using OpenAI"""
         client = self.providers['openai']
-        model = self.providers.get('openai_model', 'gpt-4o-mini')
         
         response = client.chat.completions.create(
-            model=model,
+            model=self.model,  # gpt-5-mini or other models
             messages=[
                 {"role": "system", "content": "You are an expert ATS (Applicant Tracking System) analyzer and resume optimization specialist. Always respond with valid JSON when requested."},
                 {"role": "user", "content": prompt}

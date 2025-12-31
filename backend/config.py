@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
     perplexity_api_key: Optional[str] = None
+    deepseek_api_key: Optional[str] = None
     rovodev_api_key: Optional[str] = None
     
     # Scraping Configuration

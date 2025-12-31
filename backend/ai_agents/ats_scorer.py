@@ -4,10 +4,15 @@ Analyzes resume for Applicant Tracking System compatibility
 """
 from typing import Dict, List
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 
 
 class ATSScorer(BaseAgent):
     """Scores resume for ATS compatibility"""
+    
+    def __init__(self):
+        config = get_model_config("ATSScorer")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
     
     def process(self, resume_text: str, job_description: str) -> Dict:
         """

@@ -4,10 +4,15 @@ Extracts structured information from job descriptions
 """
 from typing import Dict, List
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 
 
 class JDAnalyzer(BaseAgent):
     """Analyzes job descriptions and extracts key information"""
+    
+    def __init__(self):
+        config = get_model_config("JDAnalyzer")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
     
     def process(self, job_description: str) -> Dict:
         """

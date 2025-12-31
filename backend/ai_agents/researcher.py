@@ -4,13 +4,15 @@ Researches companies and provides comprehensive interview preparation with Q&A
 """
 from typing import Dict, List
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 
 
 class CompanyResearcher(BaseAgent):
     """Researches companies and generates comprehensive interview prep with Q&A"""
     
     def __init__(self, preferred_provider: str = "openai"):
-        super().__init__(preferred_provider="openai", model="gpt-5-mini")  # Use GPT-5-mini for interview prep
+        config = get_model_config("CompanyResearcher")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
     
     def process(self, company_name: str, job_title: str = None, 
                 job_description: str = None, resume_text: str = None) -> Dict:

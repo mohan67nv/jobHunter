@@ -1,5 +1,5 @@
 """
-AI-Powered Job Scraper - Uses GPT-5-mini to search and extract job listings
+AI-Powered Job Scraper - Uses DeepSeek to search and extract job listings
 Bypasses anti-scraping by using AI to search the web and extract structured job data
 """
 from typing import List, Dict, Optional
@@ -7,6 +7,7 @@ from datetime import datetime
 import json
 import re
 from scrapers.base_scraper import BaseScraper
+from ai_agents.model_config import get_model_config
 
 # Import AI clients
 try:
@@ -18,31 +19,44 @@ except ImportError:
 
 
 class AIJobScraper(BaseScraper):
-    """AI-powered scraper using GPT-5-mini to extract job listings"""
+    """AI-powered scraper using DeepSeek to extract job listings"""
     
-    def __init__(self, provider: str = 'openai'):
+    def __init__(self, provider: str = 'deepseek'):
         """
         Initialize scraper
         
         Args:
-            provider: 'openai' (using gpt-5-mini)
+            provider: AI provider (uses model_config.py settings)
         """
         super().__init__()
-        self.provider = provider
         
         if not OPENAI_AVAILABLE:
             self.logger.error("❌ OpenAI library not installed")
             return
         
-        # Initialize AI client with GPT-5-mini
-        api_key = os.getenv('OPENAI_API_KEY')
-        if not api_key:
-            self.logger.error("❌ OPENAI_API_KEY not set")
-            return
-        self.client = OpenAI(api_key=api_key)
-        self.model = "gpt-5-mini"
+        # Get model config for AIJobScraper
+        config = get_model_config("AIJobScraper")
+        self.provider = config["provider"]
+        self.model = config["model"]
         
-        self.logger.info(f"✅ AI Scraper initialized with {provider}")
+        # Initialize AI client
+        if self.provider == "deepseek":
+            api_key = os.getenv('DEEPSEEK_API_KEY')
+            if not api_key:
+                self.logger.error("❌ DEEPSEEK_API_KEY not set")
+                return
+            self.client = OpenAI(
+                api_key=api_key,
+                base_url="https://api.deepseek.com"
+            )
+        else:
+            api_key = os.getenv('OPENAI_API_KEY')
+            if not api_key:
+                self.logger.error("❌ OPENAI_API_KEY not set")
+                return
+            self.client = OpenAI(api_key=api_key)
+        
+        self.logger.info(f"✅ AI Scraper initialized with {self.provider} ({self.model})")
     
     def scrape(self, keyword: str, location: str = "Germany", 
                site: str = "indeed.de", max_results: int = 20) -> List[Dict]:

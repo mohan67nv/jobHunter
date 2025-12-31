@@ -5,6 +5,7 @@ Based on Jobscan, Taleo, and other industry-standard ATS systems
 """
 from typing import Dict, List, Optional
 from ai_agents.base_agent import BaseAgent
+from ai_agents.model_config import get_model_config
 from utils.logger import setup_logger
 import re
 
@@ -15,7 +16,8 @@ class EnhancedATSScorer(BaseAgent):
     """Industry-standard ATS scoring with 30+ comprehensive checks (Jobscan-level)"""
     
     def __init__(self):
-        super().__init__(preferred_provider="openai", model="gpt-5-mini")  # Using GPT-5-mini
+        config = get_model_config("EnhancedATSScorer")
+        super().__init__(preferred_provider=config["provider"], model=config["model"])
         self.logger = logger
     
     def process(self, resume_text: str, job_description: str) -> Dict:
