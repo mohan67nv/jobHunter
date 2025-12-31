@@ -1,8 +1,10 @@
-import { X, ExternalLink, Download, FileText, Briefcase, TrendingUp, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
+import { X, ExternalLink, Download, FileText, Briefcase, TrendingUp, AlertCircle, Loader2, CheckCircle2, Check } from 'lucide-react'
 import { Job, JobAnalysis } from '../types'
 import { formatDate, getMatchScoreBadgeColor, cn } from '../lib/utils'
 import { useAnalyzeJob } from '../hooks/useAnalysis'
 import { useState } from 'react'
+import { applicationsApi } from '../lib/api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 
 interface JobDetailModalProps {
   job: Job
@@ -13,8 +15,10 @@ interface JobDetailModalProps {
 
 export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDetailModalProps) {
   const analyzeJobMutation = useAnalyzeJob()
+  const queryClient = useQueryClient()
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
 
   if (!isOpen) return null
 
@@ -47,6 +51,35 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
         }
       }
     )
+  }
+
+  // Mutation for marking as applied
+  const markAsAppliedMutation = useMutation({
+    mutationFn: async (status: string) => {
+      const response = await applicationsApi.create({
+        job_id: job.id,
+        status: status,
+        applied_date: status === 'applied' ? new Date().toISOString() : null,
+      })
+      return response.data
+    },
+    onSuccess: (data) => {
+      setApplicationStatus(data.status)
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['application-stats'] })
+    },
+    onError: (error: any) => {
+      console.error('Failed to mark as applied:', error)
+      if (error.response?.status === 400) {
+        alert('Application already exists for this job')
+      } else {
+        alert('Failed to save application. Please try again.')
+      }
+    }
+  })
+
+  const handleMarkAsApplied = (status: string) => {
+    markAsAppliedMutation.mutate(status)
   }
 
   const matchScore = analysis?.match_score || 0
@@ -167,16 +200,45 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
                 )}
 
                 {/* Apply Button */}
-                <div className="flex space-x-3">
+                <div className="flex flex-col space-y-3">
                   <a
                     href={job.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="flex items-center justify-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     <span>Apply on {job.source}</span>
                     <ExternalLink className="h-4 w-4" />
                   </a>
+
+                  {/* Quick Action Buttons */}
+                  <div className="flex space-x-2">
+                    {!applicationStatus ? (
+                      <>
+                        <button
+                          onClick={() => handleMarkAsApplied('saved')}
+                          disabled={markAsAppliedMutation.isPending}
+                          className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                          {markAsAppliedMutation.isPending ? 'Saving...' : '💾 Save for Later'}
+                        </button>
+                        <button
+                          onClick={() => handleMarkAsApplied('applied')}
+                          disabled={markAsAppliedMutation.isPending}
+                          className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium disabled:opacity-50"
+                        >
+                          {markAsAppliedMutation.isPending ? 'Marking...' : '✓ Mark as Applied'}
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex-1 px-4 py-2 bg-green-100 text-green-800 rounded-lg text-sm font-medium flex items-center justify-center space-x-2">
+                        <Check className="h-4 w-4" />
+                        <span>
+                          {applicationStatus === 'saved' ? 'Saved for Later' : 'Marked as Applied'}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
 
