@@ -33,9 +33,9 @@ class Application(Base):
     def __repr__(self):
         return f"<Application(id={self.id}, job_id={self.job_id}, status='{self.status}')>"
     
-    def to_dict(self):
+    def to_dict(self, include_job=False):
         """Convert to dictionary for API responses"""
-        return {
+        data = {
             "id": self.id,
             "job_id": self.job_id,
             "status": self.status,
@@ -51,6 +51,19 @@ class Application(Base):
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
+        
+        # Include job details if requested
+        if include_job and self.job:
+            data['job'] = {
+                'id': self.job.id,
+                'title': self.job.title,
+                'company': self.job.company,
+                'location': self.job.location,
+                'url': self.job.url,
+                'source': self.job.source,
+            }
+        
+        return data
 
 
 # Create indexes

@@ -1,10 +1,11 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { CheckSquare, Calendar, FileText, TrendingUp, Filter, Search } from 'lucide-react'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { CheckSquare, Calendar, FileText, TrendingUp, Filter, Search, Trash2 } from 'lucide-react'
 import { applicationsApi } from '../lib/api'
 import { getStatusColor, getStatusLabel, formatDate } from '../lib/utils'
 
 export default function Applications() {
+  const queryClient = useQueryClient()
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
 
@@ -23,6 +24,47 @@ export default function Applications() {
       return response.data
     },
   })
+
+  // Mutation for updating status
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ appId, status }: { appId: number; status: string }) => {
+      const response = await applicationsApi.update(appId, { status })
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['application-stats'] })
+    },
+    onError: (error) => {
+      console.error('Failed to update status:', error)
+      alert('Failed to update status. Please try again.')
+    }
+  })
+
+  // Mutation for deleting application
+  const deleteApplicationMutation = useMutation({
+    mutationFn: async (appId: number) => {
+      await applicationsApi.delete(appId)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['application-stats'] })
+    },
+    onError: (error) => {
+      console.error('Failed to delete application:', error)
+      alert('Failed to delete application. Please try again.')
+    }
+  })
+
+  const handleStatusChange = (appId: number, newStatus: string) => {
+    updateStatusMutation.mutate({ appId, status: newStatus })
+  }
+
+  const handleDelete = (appId: number, company: string) => {
+    if (confirm(`Are you sure you want to delete the application for ${company}?`)) {
+      deleteApplicationMutation.mutate(appId)
+    }
+  }
 
   const statuses = [
     { value: 'all', label: 'All Applications', color: 'gray' },
@@ -159,9 +201,21 @@ export default function Applications() {
                   </td>
                   <td className="px-6 py-4 text-gray-700">{app.job?.company || 'N/A'}</td>
                   <td className="px-6 py-4">
-                    <span className={`px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(app.status)}`}>
-                      {getStatusLabel(app.status)}
-                    </span>
+                    <select
+                      value={app.status}
+                      onChange={(e) => handleStatusChange(app.id, e.target.value)}
+                      disabled={updateStatusMutation.isPending}
+                      className={`px-3 py-1 text-xs font-semibold rounded-full border-0 focus:ring-2 focus:ring-green-500 ${getStatusColor(app.status)} cursor-pointer`}
+                    >
+                      <option value="saved">💾 Saved</option>
+                      <option value="applied">✓ Applied</option>
+                      <option value="phone_screen">📞 Phone Screen</option>
+                      <option value="interview">🗓️ Interview</option>
+                      <option value="technical">💻 Technical</option>
+                      <option value="offer">🎉 Offer</option>
+                      <option value="rejected">❌ Rejected</option>
+                      <option value="withdrawn">🚫 Withdrawn</option>
+                    </select>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
                     {app.applied_date ? formatDate(app.applied_date) : '-'}
@@ -170,8 +224,13 @@ export default function Applications() {
                     {app.interview_date ? formatDate(app.interview_date) : '-'}
                   </td>
                   <td className="px-6 py-4">
-                    <button className="px-4 py-2 text-sm bg-green-600 text-white rounded-lg hover:bg-green-700">
-                      Update
+                    <button
+                      onClick={() => handleDelete(app.id, app.job?.company || 'this job')}
+                      disabled={deleteApplicationMutation.isPending}
+                      className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                      title="Delete application"
+                    >
+                      <Trash2 className="h-5 w-5" />
                     </button>
                   </td>
                 </tr>

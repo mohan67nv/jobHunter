@@ -32,7 +32,7 @@ def list_applications(
     
     applications = query.order_by(Application.updated_at.desc()).all()
     
-    return [app.to_dict() for app in applications]
+    return [app.to_dict(include_job=True) for app in applications]
 
 
 @router.get("/stats")
@@ -63,8 +63,8 @@ def get_application_stats(db: Session = Depends(get_db)):
     return {
         "status_counts": status_counts,
         "total_applications": sum(status_counts.values()),
-        "recent_activity": [app.to_dict() for app in recent],
-        "upcoming_interviews": [app.to_dict() for app in upcoming_interviews]
+        "recent_activity": [app.to_dict(include_job=True) for app in recent],
+        "upcoming_interviews": [app.to_dict(include_job=True) for app in upcoming_interviews]
     }
 
 
