@@ -1,0 +1,173 @@
+"""
+Automated Scheduler Service
+Runs scheduled tasks: daily scraping (2x per day) and match score calculation
+"""
+import schedule
+import time
+import logging
+from datetime import datetime
+from database import SessionLocal
+from scrapers.scraper_manager import ScraperManager
+from ai_agents.matcher import JobMatcher
+from models.job import Job, JobAnalysis
+from models.user import User
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+
+def run_daily_scraping():
+    """Run automated job scraping with default search terms"""
+    logger.info("🚀 Starting scheduled job scraping...")
+    
+    try:
+        db = SessionLocal()
+        manager = ScraperManager(db)
+        
+        # Get user's search keywords from profile
+        user = db.query(User).first()
+        if user and user.search_keywords:
+            keywords = user.search_keywords.split(',')
+        else:
+            # Default keywords if no user profile
+            keywords = ['Python Developer', 'Software Engineer', 'Data Scientist']
+        
+        # Scrape for each keyword
+        total_new = 0
+        for keyword in keywords:
+            keyword = keyword.strip()
+            logger.info(f"Scraping for: {keyword}")
+            
+            stats = manager.scrape_all(
+                keyword=keyword,
+                location=user.preferred_locations if user else 'Germany',
+                sources=None  # All sources
+            )
+            
+            total_new += stats['total_new']
+            logger.info(f"  Found {stats['total_found']} jobs, {stats['total_new']} new")
+        
+        logger.info(f"✅ Scraping complete: {total_new} total new jobs added")
+        db.close()
+        
+    except Exception as e:
+        logger.error(f"❌ Scraping failed: {e}", exc_info=True)
+
+
+def calculate_match_scores():
+    """Calculate or update match scores for all jobs without analysis"""
+    logger.info("🧮 Starting match score calculation...")
+    
+    try:
+        db = SessionLocal()
+        
+        # Get jobs without analysis or with old analysis
+        jobs_to_analyze = db.query(Job).outerjoin(JobAnalysis).filter(
+            Job.is_active == True,
+            (JobAnalysis.id == None)  # No analysis yet
+        ).limit(100).all()  # Process 100 jobs at a time
+        
+        if not jobs_to_analyze:
+            logger.info("No jobs need analysis")
+            db.close()
+            return
+        
+        logger.info(f"Analyzing {len(jobs_to_analyze)} jobs...")
+        
+        # Get user profile for matching
+        user = db.query(User).first()
+        if not user:
+            logger.warning("No user profile found, skipping match score calculation")
+            db.close()
+            return
+        
+        # Initialize matcher
+        matcher = JobMatcher()
+        
+        analyzed_count = 0
+        for job in jobs_to_analyze:
+            try:
+                # Calculate match score
+                result = matcher.calculate_match_score(job, user)
+                
+                # Create or update analysis
+                existing_analysis = db.query(JobAnalysis).filter(
+                    JobAnalysis.job_id == job.id
+                ).first()
+                
+                if existing_analysis:
+                    # Update existing
+                    existing_analysis.match_score = result['match_score']
+                    existing_analysis.skills_matched = result['skills_matched']
+                    existing_analysis.skills_missing = result['skills_missing']
+                    existing_analysis.fit_summary = result['fit_summary']
+                    existing_analysis.recommendations = result['recommendations']
+                else:
+                    # Create new
+                    analysis = JobAnalysis(
+                        job_id=job.id,
+                        match_score=result['match_score'],
+                        skills_matched=result['skills_matched'],
+                        skills_missing=result['skills_missing'],
+                        fit_summary=result['fit_summary'],
+                        recommendations=result['recommendations']
+                    )
+                    db.add(analysis)
+                
+                analyzed_count += 1
+                
+                if analyzed_count % 10 == 0:
+                    db.commit()
+                    logger.info(f"  Analyzed {analyzed_count}/{len(jobs_to_analyze)} jobs")
+                    
+            except Exception as e:
+                logger.error(f"Error analyzing job {job.id}: {e}")
+                continue
+        
+        db.commit()
+        logger.info(f"✅ Match score calculation complete: {analyzed_count} jobs analyzed")
+        db.close()
+        
+    except Exception as e:
+        logger.error(f"❌ Match score calculation failed: {e}", exc_info=True)
+
+
+def run_scheduler():
+    """Main scheduler loop"""
+    logger.info("=" * 80)
+    logger.info("🕐 Job Hunter Scheduler Service Started")
+    logger.info("=" * 80)
+    logger.info("Schedule:")
+    logger.info("  - Job scraping: 8:00 AM and 6:00 PM daily")
+    logger.info("  - Match score calculation: Every 2 hours")
+    logger.info("=" * 80)
+    
+    # Schedule daily scraping (twice per day)
+    schedule.every().day.at("08:00").do(run_daily_scraping)
+    schedule.every().day.at("18:00").do(run_daily_scraping)
+    
+    # Schedule match score calculation (every 2 hours)
+    schedule.every(2).hours.do(calculate_match_scores)
+    
+    # Run initial match score calculation on startup
+    logger.info("Running initial match score calculation...")
+    calculate_match_scores()
+    
+    # Main loop
+    while True:
+        try:
+            schedule.run_pending()
+            time.sleep(60)  # Check every minute
+        except KeyboardInterrupt:
+            logger.info("Scheduler stopped by user")
+            break
+        except Exception as e:
+            logger.error(f"Scheduler error: {e}", exc_info=True)
+            time.sleep(60)
+
+
+if __name__ == "__main__":
+    run_scheduler()

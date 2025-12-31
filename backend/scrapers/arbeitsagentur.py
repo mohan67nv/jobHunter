@@ -16,6 +16,7 @@ class ArbeitsagenturScraper(BaseScraper):
     def __init__(self):
         super().__init__()
         self.headers = {
+            "X-API-Key": "jobboerse-jobsuche",  # Official API key
             "User-Agent": "SmartJobHunter/1.0",
             "Accept": "application/json",
         }
@@ -37,7 +38,7 @@ class ArbeitsagenturScraper(BaseScraper):
         self.logger.info(f"🔍 Scraping Arbeitsagentur for '{keyword}' in '{location}'...")
         
         jobs = []
-        page = 0
+        page = 1  # API uses 1-based indexing
         page_size = 50  # API limit per page
         
         try:
@@ -51,7 +52,7 @@ class ArbeitsagenturScraper(BaseScraper):
                     "angebotsart": "1",  # 1=employment, 2=self-employment, 4=training
                 }
                 
-                self.logger.debug(f"Fetching page {page + 1}...")
+                self.logger.debug(f"Fetching page {page}...")
                 response = requests.get(self.BASE_URL, params=params, headers=self.headers, timeout=30)
                 response.raise_for_status()
                 
@@ -94,20 +95,44 @@ class ArbeitsagenturScraper(BaseScraper):
             refnr = job_data.get("refnr", "")
             title = job_data.get("titel", "")
             company = job_data.get("arbeitgeber", "Unknown")
-            location = job_data.get("arbeitsort", {}).get("ort", "Germany")
             
-            # Job URL - construct from reference number
-            url = f"https://www.arbeitsagentur.de/jobsuche/jobdetails/{refnr}"
+            # Location - extract full details
+            arbeitsort = job_data.get("arbeitsort", {})
+            city = arbeitsort.get("ort", "Germany")
+            region = arbeitsort.get("region", "")
+            plz = arbeitsort.get("plz", "")
+            location = f"{city}, {region}" if region and region != city else city
+            if plz:
+                location = f"{location} ({plz})"
             
-            # Posted date
+            # Job URL - prefer external company URL if available, otherwise use Arbeitsagentur
+            external_url = job_data.get("externeUrl", "")
+            if external_url and external_url != "null":
+                url = external_url
+            else:
+                url = f"https://www.arbeitsagentur.de/jobsuche/jobdetails/{refnr}"
+            
+            # Posted date - proper ISO format parsing
             posted_date_str = job_data.get("aktuelleVeroeffentlichungsdatum", "")
             try:
-                posted_date = datetime.fromisoformat(posted_date_str.replace("Z", "+00:00"))
+                # Handle both ISO datetime and date-only formats
+                if "T" in posted_date_str:
+                    posted_date = datetime.fromisoformat(posted_date_str.replace("Z", "+00:00"))
+                else:
+                    # Date only format (YYYY-MM-DD)
+                    posted_date = datetime.strptime(posted_date_str, "%Y-%m-%d")
             except:
                 posted_date = datetime.now()
             
-            # Description (limited in list view, full details require individual fetch)
-            description = job_data.get("beruf", "") + "\n" + job_data.get("taetigkeit", "")
+            # Description - combine occupation and activities
+            beruf = job_data.get("beruf", "")
+            taetigkeit = job_data.get("taetigkeit", "")
+            description_parts = []
+            if beruf:
+                description_parts.append(f"Beruf: {beruf}")
+            if taetigkeit:
+                description_parts.append(f"Tätigkeit: {taetigkeit}")
+            description = "\n\n".join(description_parts) if description_parts else ""
             
             # Employment type
             angebotsart = job_data.get("angebotsart", "")
@@ -115,6 +140,8 @@ class ArbeitsagenturScraper(BaseScraper):
             
             # Entry date
             eintrittsdatum = job_data.get("eintrittsdatum", "")
+            if eintrittsdatum:
+                description += f"\n\nEintrittsdatum: {eintrittsdatum}"
             
             raw_job = {
                 "title": title,
@@ -127,9 +154,9 @@ class ArbeitsagenturScraper(BaseScraper):
                 "contract_type": None,
                 "remote_type": None,
                 "experience_level": None,
-                "salary": None,
-                "requirements": None,
-                "benefits": None,
+                "salary": None,  # Not available in list view
+                "requirements": None,  # Not available in list view
+                "benefits": None,  # Not available in list view
             }
             
             return self.normalize_job(raw_job)

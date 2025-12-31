@@ -33,6 +33,7 @@ reportlab==4.0.7
 
 # Scheduling
 apscheduler==3.10.4
+schedule==1.2.0
 
 # Notifications
 aiosmtplib==3.0.1

@@ -124,7 +124,10 @@ export default function Dashboard() {
 
   // Filter handlers
   const applyFilter = (key: string, value: string) => {
-    if (value === 'all') {
+    setPage(1) // Reset to first page when filter changes
+    
+    if (value === 'all' || value === '') {
+      // Remove filter when "All" is selected
       const newFilters = { ...filters }
       delete newFilters[key]
       setFilters(newFilters)

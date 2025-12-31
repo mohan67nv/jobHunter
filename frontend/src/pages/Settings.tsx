@@ -94,6 +94,11 @@ export default function Settings() {
     updateProfileMutation.mutate(formData)
   }
 
+  const handleSavePreferences = () => {
+    console.log('Saving preferences:', formData)
+    updateProfileMutation.mutate(formData)
+  }
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'preferences', label: 'Preferences', icon: Briefcase },
@@ -298,7 +303,9 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={profile?.preferences?.keywords?.join(', ') || ''}
+                      name="keywords"
+                      value={preferencesData.keywords}
+                      onChange={handlePreferencesChange}
                       placeholder="Data Scientist, Machine Learning, Python"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -309,7 +316,9 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={profile?.preferences?.locations?.join(', ') || ''}
+                      name="locations"
+                      value={preferencesData.locations}
+                      onChange={handlePreferencesChange}
                       placeholder="Munich, Berlin, Remote"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -320,7 +329,9 @@ export default function Settings() {
                     </label>
                     <input
                       type="number"
-                      defaultValue={profile?.preferences?.salary_min || ''}
+                      name="salary_min"
+                      value={preferencesData.salary_min}
+                      onChange={handlePreferencesChange}
                       placeholder="60000"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -329,9 +340,13 @@ export default function Settings() {
               </div>
 
               <div className="flex justify-end">
-                <button className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button 
+                  onClick={handleSavePreferences}
+                  disabled={updateProfileMutation.isPending}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
                   <Save className="h-4 w-4" />
-                  <span>Save Preferences</span>
+                  <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save Preferences'}</span>
                 </button>
               </div>
             </div>

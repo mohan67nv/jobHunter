@@ -34,29 +34,27 @@ class ScraperManager:
         self.db = db
         self.deduplicator = Deduplicator(db)
         
-        # Initialize all scrapers - Mix of JobSpy, AI-powered, and traditional scrapers
+        # Initialize ONLY scrapers with real, valid URLs
         self.scrapers = {
-            # JobSpy - LinkedIn only (Indeed/Glassdoor blocked by 403)
+            # JobSpy - LinkedIn (real job URLs)
             'jobspy': JobSpyScraper(),
             
-            # AI-powered scrapers (bypass anti-scraping with Perplexity AI)
-            'indeed': AIIndeedScraper(provider='perplexity'),
-            'stepstone_ai': AIStepStoneScraper(provider='perplexity'),
-            'glassdoor': AIGlassdoorScraper(provider='perplexity'),
-            'monster_ai': AIMonsterScraper(provider='perplexity'),
-            
-            # German job boards (template scrapers)
+            # Arbeitsagentur - German Federal Employment Agency (Official API with real URLs)
             'arbeitsagentur': ArbeitsagenturScraper(),
-            'xing': XINGJobsScraper(),
-            'finest': FinestJobsScraper(),
             
-            # Aggregators (2000-4000+ sources each)
-            'kimeta': KimetaScraper(),
-            'joblift': JobliftScraper(),
-            'jooble': JoobleScraper(),
+            # AI-powered scrapers (real URLs via Perplexity search)
+            'indeed': AIIndeedScraper(provider='perplexity'),
+            'stepstone': AIStepStoneScraper(provider='perplexity'),
+            'glassdoor': AIGlassdoorScraper(provider='perplexity'),
+            'monster': AIMonsterScraper(provider='perplexity'),
             
-            # Company scraper
-            'company': CompanyScraper(),
+            # Aggregators (disabled - template scrapers with fake URLs)
+            # 'kimeta': KimetaScraper(),
+            # 'joblift': JobliftScraper(),
+            # 'jooble': JoobleScraper(),
+            
+            # Company scraper (disabled until company list available)
+            # 'company': CompanyScraper(),
         }
     
     def scrape_all(self, keyword: str, location: str = "Germany", 
@@ -74,19 +72,15 @@ class ScraperManager:
         """
         logger.info(f"🚀 Starting scraping for '{keyword}' in '{location}'")
         
-        # Default sources: JobSpy (LinkedIn) + AI scrapers + German boards
+        # Default sources: ONLY scrapers with real, valid URLs
         if sources is None or sources == ['all']:
             sources = [
-                'jobspy',  # LinkedIn via JobSpy
-                'indeed',  # Indeed via AI (Perplexity)
-                'glassdoor',  # Glassdoor via AI (Perplexity)
-                'stepstone_ai',  # StepStone via AI (Perplexity)
-                'monster_ai',  # Monster via AI (Perplexity)
-                'arbeitsagentur',  # German federal agency
-                'xing',  # German professional network
-                'finest',  # Direct company postings
-                'kimeta',  # Meta-aggregator (2000+ sources)
-                'joblift',  # Meta-aggregator (4000+ sources)
+                'jobspy',         # LinkedIn (100 jobs, real URLs)
+                'arbeitsagentur', # Arbeitsagentur (Official API, real URLs)
+                'indeed',         # Indeed via AI (20 jobs, real URLs)
+                'stepstone',      # StepStone via AI (20 jobs, real URLs)
+                'glassdoor',      # Glassdoor via AI (20 jobs, real URLs)
+                'monster',        # Monster via AI (20 jobs, real URLs)
             ]
         
         all_jobs = []
@@ -244,15 +238,15 @@ class ScraperManager:
         for job_data in jobs:
             try:
                 # FILTER 1: Skip internships
-                title = job_data.get('title', '').lower()
-                job_type = job_data.get('job_type', '').lower()
+                title = (job_data.get('title') or '').lower()
+                job_type = (job_data.get('job_type') or '').lower()
                 if 'intern' in title or 'praktikum' in title or 'internship' in job_type:
                     logger.debug(f"Skipping internship: {job_data.get('title')}")
                     continue
                 
                 # FILTER 2: Skip jobs requiring fluent German
-                description = (job_data.get('description', '') or '').lower()
-                requirements = (job_data.get('requirements', '') or '').lower()
+                description = (job_data.get('description') or '').lower()
+                requirements = (job_data.get('requirements') or '').lower()
                 combined_text = f"{description} {requirements}"
                 
                 german_required_patterns = [
