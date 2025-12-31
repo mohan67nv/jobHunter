@@ -2,10 +2,11 @@
 Centralized AI Model Configuration
 Maps each agent to its optimal model based on task requirements and cost efficiency
 
-DeepSeek Models Strategy:
+Model Strategy:
 - deepseek-coder: Code/parsing, structured data extraction (JD parsing, resume optimization)
-- deepseek-chat (V3): Analysis, matching, scoring (ATS, matching, web scraping)
-- deepseek-reasoner (R1): Complex reasoning, interview prep, behavioral analysis
+- deepseek-chat (V3): Fast analysis, matching, baseline scoring
+- deepseek-reasoner (R1): Complex reasoning, detailed feedback
+- gpt-5-mini (OpenAI): Knowledge tasks, validation, latest data, reliability
 """
 
 # Model routing configuration
@@ -32,11 +33,11 @@ MODEL_ROUTING = {
         "model": "deepseek-chat"
     },
     
-    # ATS Scoring - DeepSeek V3 (Chat)
-    # Fast keyword analysis and scoring
+    # ATS Scoring - Multi-Layer System (uses all 3 models internally)
+    # Layer 1: DeepSeek Chat, Layer 2: GPT-5-mini, Layer 3: DeepSeek Reasoner
     "EnhancedATSScorer": {
         "provider": "deepseek",
-        "model": "deepseek-chat"
+        "model": "deepseek-chat"  # Base model, multi-layer overrides this
     },
     
     "ATSScorer": {
@@ -44,25 +45,41 @@ MODEL_ROUTING = {
         "model": "deepseek-chat"
     },
     
-    # Company Research - DeepSeek Reasoner (R1)
-    # Complex reasoning for interview prep, behavioral Q&A analysis
+    # Company Research - GPT-5-mini
+    # Knowledge-heavy task, needs latest data and reliability
     "CompanyResearcher": {
-        "provider": "deepseek",
-        "model": "deepseek-reasoner"
+        "provider": "openai",
+        "model": "gpt-5-mini"
     },
     
-    # Web Scraping - DeepSeek Reasoner (R1)
-    # Complex pattern recognition, intelligent content extraction from job sites
+    # Web Scraping - GPT-5-mini
+    # Web intelligence and latest scraping patterns
     "AIJobScraper": {
-        "provider": "deepseek",
-        "model": "deepseek-reasoner"
+        "provider": "openai",
+        "model": "gpt-5-mini"
     },
     
-    # Scraper Manager - DeepSeek Chat (V3)
-    # General scraping coordination and data processing
+    # Scraper Manager - GPT-5-mini
+    # Orchestration needs reliability and coordination
     "ScraperManager": {
+        "provider": "openai",
+        "model": "gpt-5-mini"
+    },
+    
+    # Multi-Layer ATS - Layer Configuration
+    "MultiLayerATS_Layer1": {
         "provider": "deepseek",
-        "model": "deepseek-chat"
+        "model": "deepseek-chat"  # Fast baseline
+    },
+    
+    "MultiLayerATS_Layer2": {
+        "provider": "openai",
+        "model": "gpt-5-mini"  # Validation & refinement
+    },
+    
+    "MultiLayerATS_Layer3": {
+        "provider": "deepseek",
+        "model": "deepseek-reasoner"  # Detailed feedback
     }
 }
 

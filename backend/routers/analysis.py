@@ -168,10 +168,23 @@ def get_interview_prep(job_id: int, db: Session = Depends(get_db)):
 
 
 @router.post("/enhanced-ats-scan/{job_id}")
-def enhanced_ats_scan(job_id: int, db: Session = Depends(get_db)):
+def enhanced_ats_scan(
+    job_id: int, 
+    use_multi_layer: bool = False,
+    tier: str = 'standard',
+    db: Session = Depends(get_db)
+):
     """
     Industry-standard ATS scan (JobScan level)
-    Multi-layer analysis: Keywords, Font, Layout, Page Setup
+    
+    Args:
+        job_id: Job to analyze
+        use_multi_layer: Enable 3-layer AI scoring (DeepSeek + GPT-5-mini)
+        tier: 'basic' (score only), 'standard' (score + insights), 'premium' (full feedback)
+    
+    Returns:
+        Legacy mode: Keywords, Font, Layout, Page Setup (30+ checks)
+        Multi-layer mode: 3-layer AI score with tier-based feedback
     """
     job = db.query(Job).get(job_id)
     if not job:
@@ -184,21 +197,40 @@ def enhanced_ats_scan(job_id: int, db: Session = Depends(get_db)):
     
     # Run enhanced ATS analysis
     try:
-        ats_scorer = EnhancedATSScorer()
-        result = ats_scorer.process(user.resume_text, job.description)
+        ats_scorer = EnhancedATSScorer(use_multi_layer=use_multi_layer)
+        result = ats_scorer.process(user.resume_text, job.description, tier=tier)
         
-        return {
+        response = {
             "job_id": job_id,
             "job_title": job.title,
             "company": job.company,
-            "ats_score": result['ats_score'],
-            "keyword_analysis": result['keyword_analysis'],
-            "font_check": result['font_check'],
-            "layout_check": result['layout_check'],
-            "page_setup_check": result['page_setup_check'],
-            "structure_analysis": result['structure_analysis'],
-            "overall_recommendations": result['overall_recommendations']
+            "scoring_mode": "multi_layer" if use_multi_layer else "legacy",
+            "tier": tier if use_multi_layer else "legacy"
         }
+        
+        if use_multi_layer:
+            # Multi-layer response format
+            response.update({
+                "final_score": result['final_score'],
+                "confidence": result['confidence'],
+                "layer_scores": result['layer_scores'],
+                "detailed_feedback": result.get('detailed_feedback'),
+                "cost_breakdown": result.get('cost_breakdown'),
+                "processing_time": result.get('processing_time')
+            })
+        else:
+            # Legacy response format
+            response.update({
+                "ats_score": result['ats_score'],
+                "keyword_analysis": result['keyword_analysis'],
+                "font_check": result['font_check'],
+                "layout_check": result['layout_check'],
+                "page_setup_check": result['page_setup_check'],
+                "structure_analysis": result['structure_analysis'],
+                "overall_recommendations": result['overall_recommendations']
+            })
+        
+        return response
     except Exception as e:
         logger.error(f"Enhanced ATS scan failed: {e}")
         raise HTTPException(status_code=500, detail=f"ATS scan failed: {str(e)}")

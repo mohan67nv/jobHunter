@@ -2,10 +2,15 @@
 Enhanced ATS Scorer Agent - Industry Standard (JobScan Level)
 Multi-layer analysis with 30+ checks including keywords, formatting, content, and structure
 Based on Jobscan, Taleo, and other industry-standard ATS systems
+
+Now with Multi-Layer AI Scoring:
+- Legacy mode: Traditional 30+ checks
+- Multi-layer mode: 3-layer AI system (DeepSeek + GPT-5-mini)
 """
 from typing import Dict, List, Optional
 from ai_agents.base_agent import BaseAgent
 from ai_agents.model_config import get_model_config
+from ai_agents.multi_layer_ats import MultiLayerATSScorer
 from utils.logger import setup_logger
 import re
 
@@ -15,17 +20,31 @@ logger = setup_logger(__name__)
 class EnhancedATSScorer(BaseAgent):
     """Industry-standard ATS scoring with 30+ comprehensive checks (Jobscan-level)"""
     
-    def __init__(self):
+    def __init__(self, use_multi_layer: bool = False):
         config = get_model_config("EnhancedATSScorer")
         super().__init__(preferred_provider=config["provider"], model=config["model"])
         self.logger = logger
+        self.use_multi_layer = use_multi_layer
+        self.multi_layer_scorer = MultiLayerATSScorer() if use_multi_layer else None
     
-    def process(self, resume_text: str, job_description: str) -> Dict:
+    def process(self, resume_text: str, job_description: str, tier: str = 'standard') -> Dict:
         """
         Comprehensive ATS analysis with 30+ checks (Jobscan standard)
         
-        Returns industry-standard ATS score with detailed breakdown
+        Args:
+            resume_text: Full resume text
+            job_description: Full job description text
+            tier: 'basic', 'standard', or 'premium' (for multi-layer mode)
+        
+        Returns:
+            industry-standard ATS score with detailed breakdown
         """
+        # Use multi-layer scoring if enabled
+        if self.use_multi_layer and self.multi_layer_scorer:
+            self.logger.info(f"🚀 Using Multi-Layer ATS Scoring ({tier} tier)...")
+            return self.multi_layer_scorer.assess_resume(resume_text, job_description, tier)
+        
+        # Legacy mode: Traditional 30+ checks
         self.logger.info("🔍 Starting Enhanced ATS Analysis (30+ checks)...")
         
         # Layer 1: Keyword Analysis (15 checks)

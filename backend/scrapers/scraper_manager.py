@@ -35,7 +35,7 @@ class ScraperManager:
         self.db = db
         self.deduplicator = Deduplicator(db)
         
-        # Get model config for scrapers
+        # Get model config for scrapers (now using GPT-5-mini for web intelligence)
         scraper_config = get_model_config('AIJobScraper')
         
         # Initialize ONLY scrapers with real, valid URLs
@@ -46,7 +46,7 @@ class ScraperManager:
             # Arbeitsagentur - German Federal Employment Agency (Official API with real URLs)
             'arbeitsagentur': ArbeitsagenturScraper(),
             
-            # AI-powered scrapers (using DeepSeek Reasoner for intelligent scraping)
+            # AI-powered scrapers (using GPT-5-mini for web intelligence and reliability)
             'indeed': AIIndeedScraper(provider=scraper_config['provider'], model=scraper_config['model']),
             'stepstone': AIStepStoneScraper(provider=scraper_config['provider'], model=scraper_config['model']),
             'glassdoor': AIGlassdoorScraper(provider=scraper_config['provider'], model=scraper_config['model']),
