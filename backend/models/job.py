@@ -45,19 +45,41 @@ class Job(Base):
     
     def to_dict(self):
         """Convert to dictionary for API responses"""
-        # Extract languages from requirements if available
+        # Extract languages from description and requirements
         languages = []
-        if self.requirements:
-            req_lower = self.requirements.lower()
-            if 'english' in req_lower:
+        search_text = (self.description or "").lower() + " " + (self.requirements or "").lower()
+        
+        # Common language patterns with proficiency levels
+        if 'english' in search_text or 'englisch' in search_text:
+            if 'fluent' in search_text or 'proficient' in search_text or 'native' in search_text:
+                languages.append('English (fluent)')
+            elif 'business' in search_text:
+                languages.append('English (business)')
+            else:
                 languages.append('English')
-            if 'german' in req_lower and 'fluent' not in req_lower:
-                languages.append('German (basic/intermediate)')
+        
+        if 'german' in search_text or 'deutsch' in search_text:
+            if 'fluent' in search_text or 'fließend' in search_text or 'native' in search_text or 'muttersprache' in search_text:
+                languages.append('German (fluent)')
+            elif 'business' in search_text or 'verhandlungssicher' in search_text:
+                languages.append('German (business)')
+            elif 'basic' in search_text or 'grundkenntnisse' in search_text:
+                languages.append('German (basic)')
+            else:
+                languages.append('German')
+        
+        # Other common languages in Germany
+        if 'french' in search_text or 'französisch' in search_text:
+            languages.append('French')
+        if 'spanish' in search_text or 'spanisch' in search_text:
+            languages.append('Spanish')
+        if 'italian' in search_text or 'italienisch' in search_text:
+            languages.append('Italian')
         
         return {
             "id": self.id,
             "title": self.title,
-            "languages": languages,
+            "languages": languages if languages else None,
             "company": self.company,
             "location": self.location,
             "salary": self.salary,

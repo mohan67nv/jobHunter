@@ -95,11 +95,30 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
                 {/* Job Details */}
                 <div>
                   <h3 className="text-lg font-semibold mb-3">Job Details</h3>
+                  
+                  {/* Salary */}
                   {job.salary && (
-                    <div className="mb-2">
-                      <span className="font-medium">Salary:</span> {job.salary}
+                    <div className="mb-3 flex items-center">
+                      <span className="text-2xl mr-2">💰</span>
+                      <div>
+                        <span className="font-medium text-gray-700">Salary: </span>
+                        <span className="text-gray-900 font-semibold">{job.salary}</span>
+                      </div>
                     </div>
                   )}
+                  
+                  {/* Languages */}
+                  {job.languages && job.languages.length > 0 && (
+                    <div className="mb-3 flex items-center">
+                      <span className="text-2xl mr-2">🗣️</span>
+                      <div>
+                        <span className="font-medium text-gray-700">Languages: </span>
+                        <span className="text-gray-900">{job.languages.join(', ')}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Tags */}
                   <div className="flex flex-wrap gap-2 mb-4">
                     {job.job_type && (
                       <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm">
