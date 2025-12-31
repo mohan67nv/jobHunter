@@ -14,6 +14,8 @@ export function useAnalysis(jobId: number | null) {
     },
     enabled: !!jobId,
     retry: false, // Don't retry if analysis doesn't exist
+    refetchOnWindowFocus: true, // Refetch when window regains focus
+    staleTime: 0, // Always consider data stale so it refetches
   })
 }
 
@@ -24,33 +26,40 @@ export function useAnalyzeJob() {
     mutationFn: ({ jobId, generateMaterials = true }: { jobId: number; generateMaterials?: boolean }) =>
       analysisApi.analyzeJob(jobId, generateMaterials),
     onSuccess: (_, variables) => {
-      console.log('✅ AI Analysis started for job', variables.jobId)
+      console.log('✅ AI Analysis API call successful for job', variables.jobId)
       
-      // Poll for results every 3 seconds for up to 60 seconds
+      // Aggressively poll for results every 2 seconds for up to 60 seconds
       let attempts = 0
-      const maxAttempts = 20
+      const maxAttempts = 30
       
       const pollInterval = setInterval(async () => {
         attempts++
+        console.log(`🔄 Polling attempt ${attempts}/${maxAttempts}...`)
         
         try {
           const response = await analysisApi.get(variables.jobId)
-          if (response.data) {
+          if (response.data && (response.data.tailored_resume || response.data.ats_score > 0)) {
             clearInterval(pollInterval)
-            console.log('✅ Analysis complete!', response.data)
+            console.log('✅ Full analysis complete!', response.data)
             
-            // Invalidate queries to refresh UI
-            queryClient.invalidateQueries({ queryKey: ['analysis', variables.jobId] })
-            queryClient.invalidateQueries({ queryKey: ['jobs'] })
+            // Force refetch by invalidating and refetching
+            await queryClient.invalidateQueries({ queryKey: ['analysis', variables.jobId] })
+            await queryClient.refetchQueries({ queryKey: ['analysis', variables.jobId] })
+            await queryClient.invalidateQueries({ queryKey: ['jobs'] })
+            
+            console.log('✅ UI refreshed with analysis results')
+          } else {
+            console.log('⏳ Analysis in progress, waiting...')
           }
         } catch (error) {
           // Analysis not ready yet, continue polling
+          console.log('⏳ Analysis not ready, continuing to poll...')
           if (attempts >= maxAttempts) {
             clearInterval(pollInterval)
-            console.log('⏱️ Analysis taking longer than expected, please refresh')
+            console.log('⏱️ Analysis taking longer than expected (60s). Please close and reopen the job.')
           }
         }
-      }, 3000)
+      }, 2000) // Poll every 2 seconds
     },
     onError: (error) => {
       console.error('❌ Failed to start analysis:', error)
