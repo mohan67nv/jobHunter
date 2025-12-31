@@ -12,10 +12,18 @@ logger = setup_logger(__name__)
 
 # Import AI providers
 try:
-    import google.generativeai as genai
+    from google import genai
     GEMINI_AVAILABLE = True
 except ImportError:
-    GEMINI_AVAILABLE = False
+    try:
+        import google.generativeai as genai_legacy
+        GEMINI_AVAILABLE = True
+        GEMINI_LEGACY = True
+    except ImportError:
+        GEMINI_AVAILABLE = False
+        GEMINI_LEGACY = False
+else:
+    GEMINI_LEGACY = False
 
 try:
     from anthropic import Anthropic
@@ -29,16 +37,22 @@ try:
 except ImportError:
     OPENAI_AVAILABLE = False
 
+try:
+    from openai import OpenAI as PerplexityClient
+    PERPLEXITY_AVAILABLE = True
+except ImportError:
+    PERPLEXITY_AVAILABLE = False
+
 
 class BaseAgent(ABC):
     """Abstract base class for AI agents"""
     
-    def __init__(self, preferred_provider: str = "gemini"):
+    def __init__(self, preferred_provider: str = "perplexity"):
         """
         Initialize AI agent
         
         Args:
-            preferred_provider: Preferred AI provider (gemini, claude, openai)
+            preferred_provider: Preferred AI provider (perplexity, gemini, claude, openai)
         """
         self.preferred_provider = preferred_provider
         self.providers = self._initialize_providers()
@@ -50,12 +64,45 @@ class BaseAgent(ABC):
         """Initialize available AI providers"""
         providers = {}
         
-        # Gemini
+        # Perplexity (PRIMARY - fast and reliable for AI analysis)
+        if PERPLEXITY_AVAILABLE and settings.perplexity_api_key:
+            try:
+                providers['perplexity'] = PerplexityClient(
+                    api_key=settings.perplexity_api_key,
+                    base_url="https://api.perplexity.ai"
+                )
+                logger.info("✅ Perplexity AI initialized (Primary provider)")
+            except TypeError as e:
+                # Handle proxies parameter issue in older OpenAI client versions
+                try:
+                    import httpx
+                    http_client = httpx.Client()
+                    providers['perplexity'] = PerplexityClient(
+                        api_key=settings.perplexity_api_key,
+                        base_url="https://api.perplexity.ai",
+                        http_client=http_client
+                    )
+                    logger.info("✅ Perplexity AI initialized (Primary provider - with custom client)")
+                except Exception as e2:
+                    logger.error(f"Failed to initialize Perplexity: {e2}")
+            except Exception as e:
+                logger.error(f"Failed to initialize Perplexity: {e}")
+        
+        # Gemini (FALLBACK for ATS analysis)
         if GEMINI_AVAILABLE and settings.gemini_api_key:
             try:
-                genai.configure(api_key=settings.gemini_api_key)
-                providers['gemini'] = genai.GenerativeModel('gemini-pro')
-                logger.info("✅ Gemini Pro initialized")
+                if not GEMINI_LEGACY:
+                    # New google.genai SDK (v2.0+)
+                    client = genai.Client(api_key=settings.gemini_api_key)
+                    providers['gemini'] = client
+                    providers['gemini_model'] = 'gemini-2.0-flash-exp'  # Fast and reliable
+                    logger.info("✅ Gemini 2.0 Flash initialized (new SDK)")
+                else:
+                    # Legacy google-generativeai SDK
+                    genai_legacy.configure(api_key=settings.gemini_api_key)
+                    providers['gemini'] = genai_legacy.GenerativeModel('gemini-1.5-flash')
+                    providers['gemini_model'] = 'legacy'
+                    logger.info("✅ Gemini 1.5 Flash initialized (legacy SDK)")
             except Exception as e:
                 logger.error(f"Failed to initialize Gemini: {e}")
         
@@ -67,11 +114,12 @@ class BaseAgent(ABC):
             except Exception as e:
                 logger.error(f"Failed to initialize Claude: {e}")
         
-        # OpenAI
+        # OpenAI (GPT-5 Mini for ATS scoring)
         if OPENAI_AVAILABLE and settings.openai_api_key:
             try:
                 providers['openai'] = OpenAI(api_key=settings.openai_api_key)
-                logger.info("✅ OpenAI initialized")
+                providers['openai_model'] = 'gpt-5-mini'  # Latest GPT-5 Mini model
+                logger.info("✅ OpenAI GPT-5 Mini initialized (ATS scoring)")
             except Exception as e:
                 logger.error(f"Failed to initialize OpenAI: {e}")
         
@@ -110,7 +158,9 @@ class BaseAgent(ABC):
                      temperature: float, max_tokens: int) -> Optional[str]:
         """Try to generate response with specific provider"""
         try:
-            if provider_name == 'gemini':
+            if provider_name == 'perplexity':
+                return self._generate_perplexity(prompt, temperature, max_tokens)
+            elif provider_name == 'gemini':
                 return self._generate_gemini(prompt, temperature, max_tokens)
             elif provider_name == 'claude':
                 return self._generate_claude(prompt, temperature, max_tokens)
@@ -120,21 +170,49 @@ class BaseAgent(ABC):
             logger.error(f"Error with {provider_name}: {e}")
             return None
     
-    def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        """Generate response using Gemini"""
-        model = self.providers['gemini']
+    def _generate_perplexity(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        """Generate response using Perplexity AI"""
+        client = self.providers['perplexity']
         
-        generation_config = {
-            'temperature': temperature,
-            'max_output_tokens': max_tokens,
-        }
-        
-        response = model.generate_content(
-            prompt,
-            generation_config=generation_config
+        response = client.chat.completions.create(
+            model="sonar",
+            messages=[
+                {"role": "system", "content": "You are a helpful AI assistant specialized in job analysis and ATS optimization. Always respond with valid JSON when requested."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=temperature,
+            max_tokens=max_tokens
         )
         
-        return response.text
+        return response.choices[0].message.content
+    
+    def _generate_gemini(self, prompt: str, temperature: float, max_tokens: int) -> str:
+        """Generate response using Gemini (supports both new and legacy SDK)"""
+        client = self.providers['gemini']
+        model_name = self.providers.get('gemini_model', 'gemini-2.0-flash-exp')
+        
+        if model_name == 'legacy':
+            # Legacy SDK (google-generativeai)
+            generation_config = {
+                'temperature': temperature,
+                'max_output_tokens': max_tokens,
+            }
+            response = client.generate_content(
+                prompt,
+                generation_config=generation_config
+            )
+            return response.text
+        else:
+            # New SDK (google.genai)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config={
+                    'temperature': temperature,
+                    'max_output_tokens': max_tokens,
+                }
+            )
+            return response.text
     
     def _generate_claude(self, prompt: str, temperature: float, max_tokens: int) -> str:
         """Generate response using Claude"""
@@ -152,12 +230,14 @@ class BaseAgent(ABC):
         return message.content[0].text
     
     def _generate_openai(self, prompt: str, temperature: float, max_tokens: int) -> str:
-        """Generate response using OpenAI"""
+        """Generate response using OpenAI (GPT-4o-mini or GPT-5 mini)"""
         client = self.providers['openai']
+        model = self.providers.get('openai_model', 'gpt-4o-mini')
         
         response = client.chat.completions.create(
-            model="gpt-4-turbo-preview",
+            model=model,
             messages=[
+                {"role": "system", "content": "You are an expert ATS (Applicant Tracking System) analyzer and resume optimization specialist. Always respond with valid JSON when requested."},
                 {"role": "user", "content": prompt}
             ],
             temperature=temperature,

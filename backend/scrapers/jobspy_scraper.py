@@ -7,7 +7,7 @@ from datetime import datetime
 from scrapers.base_scraper import BaseScraper
 
 try:
-    from python_jobspy import scrape_jobs
+    from jobspy import scrape_jobs
     JOBSPY_AVAILABLE = True
 except ImportError:
     JOBSPY_AVAILABLE = False
@@ -58,8 +58,8 @@ class JobSpyScraper(BaseScraper):
                     search_term=keyword,
                     location=location,
                     results_wanted=results_wanted,
-                    country_indeed="Germany" if site == "indeed" else None,
-                    hours_old=168,  # Last 7 days
+                    country_indeed="Germany" if site == "indeed" else "usa",
+                    full_description=True,  # Get full job descriptions
                 )
                 
                 if jobs_df is not None and not jobs_df.empty:

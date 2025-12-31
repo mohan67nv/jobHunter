@@ -21,9 +21,10 @@ python-rapidjson==1.14
 rapidfuzz==3.6.1
 
 # AI & NLP
-google-generativeai==0.3.2
+google-genai>=1.0.0  # New Google GenAI SDK (v2.0+ with gemini-2.0-flash-exp)
+google-generativeai==0.3.2  # Legacy SDK (fallback)
 anthropic==0.7.8
-openai==1.6.1
+openai>=1.50.0  # Latest OpenAI SDK with GPT-5 Mini support
 
 # File Processing
 PyPDF2==3.0.1
@@ -40,6 +41,7 @@ python-telegram-bot>=20.0
 # Utilities
 pydantic==2.5.3
 pydantic-settings==2.1.0
+email-validator==2.1.0
 httpx>=0.23.0,<1.0.0
 aiofiles==23.2.1
 

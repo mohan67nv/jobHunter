@@ -9,7 +9,7 @@ from models.job import Job, JobAnalysis
 from models.user import UserProfile
 from ai_agents.jd_analyzer import JDAnalyzer
 from ai_agents.matcher import ResumeMatcher
-from ai_agents.ats_scorer import ATSScorer
+from ai_agents.enhanced_ats_scorer import EnhancedATSScorer
 from ai_agents.optimizer import ApplicationOptimizer
 from ai_agents.researcher import CompanyResearcher
 from utils.logger import setup_logger
@@ -20,20 +20,20 @@ logger = setup_logger(__name__)
 class AgentManager:
     """Manages and orchestrates all AI agents for job analysis"""
     
-    def __init__(self, db: Session, preferred_provider: str = "gemini"):
+    def __init__(self, db: Session, preferred_provider: str = "perplexity"):
         """
         Initialize agent manager
         
         Args:
             db: Database session
-            preferred_provider: Preferred AI provider
+            preferred_provider: Preferred AI provider (default: perplexity)
         """
         self.db = db
         
-        # Initialize all agents
+        # Initialize all agents with perplexity as default
         self.jd_analyzer = JDAnalyzer(preferred_provider)
         self.matcher = ResumeMatcher(preferred_provider)
-        self.ats_scorer = ATSScorer(preferred_provider)
+        self.ats_scorer = EnhancedATSScorer()  # Has its own hardcoded provider (perplexity)
         self.optimizer = ApplicationOptimizer(preferred_provider)
         self.researcher = CompanyResearcher(preferred_provider)
     
@@ -144,10 +144,24 @@ class AgentManager:
                          interview_questions: list) -> Dict:
         """Combine all analysis results into single structure"""
         
+        # Extract ATS score from enhanced analysis
+        if isinstance(ats_analysis, dict) and 'ats_score' in ats_analysis:
+            ats_score = ats_analysis['ats_score']
+        else:
+            ats_score = 70  # Fallback
+        
         # Extract matching skills from match analysis
         matching_skills = [s['skill'] for s in match_analysis.get('matching_skills', [])]
         
+        # Extract missing keywords from enhanced ATS analysis
+        missing_keywords = []
+        if 'keyword_analysis' in ats_analysis:
+            missing_keywords = ats_analysis['keyword_analysis'].get('missing_critical_keywords', [])
+        
         # Calculate keyword density
+        keyword_density = 0
+        if 'keyword_analysis' in ats_analysis:
+            keyword_density = ats_analysis['keyword_analysis'].get('keyword_density', 0)
         keyword_match = ats_analysis.get('keyword_match', 0)
         keyword_density = keyword_match  # Simplified
         

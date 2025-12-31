@@ -22,6 +22,10 @@ class UserProfile(Base):
     resume_text = Column(Text, nullable=False)  # Extracted text from PDF/DOCX
     resume_pdf_path = Column(String)
     resume_docx_path = Column(String)
+    
+    # Job Search Keywords (comma-separated or JSON array)
+    search_keywords = Column(Text)  # e.g., "Machine Learning Engineer, Data Scientist, MLOps Engineer"
+    
     preferences = Column(Text)  # JSON: {keywords: [...], locations: [...], salary_min: 60000}
     target_companies = Column(Text)  # JSON array of company names
     blacklisted_companies = Column(Text)  # JSON array to exclude
@@ -55,6 +59,7 @@ class UserProfile(Base):
             "resume_text": self.resume_text,
             "resume_pdf_path": self.resume_pdf_path,
             "resume_docx_path": self.resume_docx_path,
+            "search_keywords": self.search_keywords,
             "preferences": json.loads(self.preferences) if self.preferences else {},
             "target_companies": json.loads(self.target_companies) if self.target_companies else [],
             "blacklisted_companies": json.loads(self.blacklisted_companies) if self.blacklisted_companies else [],

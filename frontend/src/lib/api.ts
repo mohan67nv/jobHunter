@@ -58,6 +58,8 @@ export const analysisApi = {
   generateResume: (jobId: number) => api.post(`/api/analysis/generate-resume/${jobId}`),
   generateCoverLetter: (jobId: number) => api.post(`/api/analysis/generate-cover-letter/${jobId}`),
   getInterviewPrep: (jobId: number) => api.get(`/api/analysis/interview-prep/${jobId}`),
+  analyzeCustom: (resumeText: string, jobDescription: string) => 
+    api.post('/api/analysis/compare-custom', { resume_text: resumeText, job_description: jobDescription }),
 }
 
 export const scrapersApi = {

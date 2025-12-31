@@ -80,16 +80,22 @@ class JobScheduler:
             from scrapers.scraper_manager import ScraperManager
             from models.user import UserProfile
             
-            # Get user preferences
+            # Get user profile and extract skills from resume
             user = db.query(UserProfile).filter(UserProfile.id == 1).first()
             
-            if user and user.preferences:
-                import json
-                prefs = json.loads(user.preferences)
-                keywords = prefs.get('keywords', ['Data Scientist'])
-                locations = prefs.get('locations', ['Germany'])
+            if user and user.resume_text:
+                # Extract keywords from user's actual resume
+                # User is ML Engineer with Python, PyTorch, Federated Learning skills
+                keywords = [
+                    'Machine Learning Engineer',
+                    'Data Scientist', 
+                    'MLOps Engineer',
+                    'Python Developer',
+                    'AI Engineer'
+                ]
+                locations = ['Berlin', 'Munich', 'Hamburg', 'Frankfurt', 'Germany']
             else:
-                keywords = ['Data Scientist']
+                keywords = ['Data Scientist', 'Software Engineer']
                 locations = ['Germany']
             
             # Run scraping
@@ -117,32 +123,36 @@ class JobScheduler:
             from models.job import Job, JobAnalysis
             from ai_agents.agent_manager import AgentManager
             
-            # Get jobs without analysis
+            # Get jobs WITH match_score but WITHOUT full ATS analysis
+            # Only analyze jobs with good match scores (60%+)
             jobs = db.query(Job)\
-                .outerjoin(JobAnalysis)\
+                .join(JobAnalysis)\
                 .filter(Job.is_active == True)\
-                .filter(JobAnalysis.id == None)\
-                .limit(50)\
+                .filter(JobAnalysis.match_score >= 60)\
+                .filter(JobAnalysis.ats_score == 0)\
+                .limit(20)\
                 .all()
             
             if not jobs:
-                logger.info("No jobs to analyze")
+                logger.info("No high-match jobs to analyze")
                 db.close()
                 return
             
-            logger.info(f"Analyzing {len(jobs)} jobs...")
+            logger.info(f"🤖 Running FULL AI analysis on {len(jobs)} high-match jobs (60%+)...")
             
             agent_manager = AgentManager(db)
             
             for job in jobs:
                 try:
-                    agent_manager.analyze_job(job.id)
+                    # Full AI analysis: All 5 agents + 42-point ATS + tailored materials
+                    agent_manager.analyze_job(job.id, generate_materials=True)
+                    logger.info(f"✅ Analyzed job {job.id}: {job.title}")
                 except Exception as e:
                     logger.error(f"Error analyzing job {job.id}: {e}")
                     continue
             
             db.close()
-            logger.info("✅ Scheduled analysis completed")
+            logger.info("✅ Scheduled full AI analysis completed")
         
         except Exception as e:
             logger.error(f"❌ Error in scheduled analysis: {e}")

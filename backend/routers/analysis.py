@@ -1,17 +1,25 @@
 """
-AI analysis endpoints
+AI analysis endpoints - Enhanced with industry-standard ATS scoring
 """
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session
 from typing import List
+from pydantic import BaseModel
 from database import get_db
 from models.job import Job, JobAnalysis
+from models.user import UserProfile
 from schemas.analysis import AnalysisRequest, AnalysisResponse
 from ai_agents.agent_manager import AgentManager
+from ai_agents.enhanced_ats_scorer import EnhancedATSScorer
 from utils.logger import setup_logger
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 logger = setup_logger(__name__)
+
+
+class CustomCompareRequest(BaseModel):
+    resume_text: str
+    job_description: str
 
 
 @router.post("/analyze-job/{job_id}")
@@ -136,3 +144,111 @@ def get_interview_prep(job_id: int, db: Session = Depends(get_db)):
         "areas_to_prepare": analysis.to_dict().get('missing_skills', []),
         "recommendations": analysis.to_dict().get('recommendations', {})
     }
+
+
+@router.post("/enhanced-ats-scan/{job_id}")
+def enhanced_ats_scan(job_id: int, db: Session = Depends(get_db)):
+    """
+    Industry-standard ATS scan (JobScan level)
+    Multi-layer analysis: Keywords, Font, Layout, Page Setup
+    """
+    job = db.query(Job).get(job_id)
+    if not job:
+        raise HTTPException(status_code=404, detail="Job not found")
+    
+    # Get user profile
+    user = db.query(UserProfile).filter(UserProfile.id == 1).first()
+    if not user or not user.resume_text:
+        raise HTTPException(status_code=400, detail="No resume found. Upload resume in Profile first.")
+    
+    # Run enhanced ATS analysis
+    try:
+        ats_scorer = EnhancedATSScorer()
+        result = ats_scorer.process(user.resume_text, job.description)
+        
+        return {
+            "job_id": job_id,
+            "job_title": job.title,
+            "company": job.company,
+            "ats_score": result['ats_score'],
+            "keyword_analysis": result['keyword_analysis'],
+            "font_check": result['font_check'],
+            "layout_check": result['layout_check'],
+            "page_setup_check": result['page_setup_check'],
+            "structure_analysis": result['structure_analysis'],
+            "overall_recommendations": result['overall_recommendations']
+        }
+    except Exception as e:
+        logger.error(f"Enhanced ATS scan failed: {e}")
+        raise HTTPException(status_code=500, detail=f"ATS scan failed: {str(e)}")
+
+
+@router.post("/compare-custom")
+def compare_custom_cv_jd(
+    request: CustomCompareRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Compare custom CV text with job description (without saving to database)
+    
+    - **resume_text**: Your resume/CV text
+    - **job_description**: Job description to compare against
+    
+    Returns match analysis with score, matching skills, gaps, and recommendations
+    """
+    try:
+        from ai_agents.jd_analyzer import JDAnalyzer
+        from ai_agents.matcher import ResumeMatcher
+        
+        if not request.resume_text or not request.resume_text.strip():
+            raise HTTPException(status_code=400, detail="Resume text is required")
+        
+        if not request.job_description or not request.job_description.strip():
+            raise HTTPException(status_code=400, detail="Job description is required")
+        
+        logger.info("🔍 Analyzing custom CV-JD comparison...")
+        
+        # Step 1: Analyze job description
+        jd_analyzer = JDAnalyzer()
+        jd_analysis = jd_analyzer.process(request.job_description)
+        
+        # Step 2: Match resume to job
+        matcher = ResumeMatcher()
+        match_result = matcher.process(request.resume_text, request.job_description, jd_analysis)
+        
+        # Step 3: Calculate ATS score
+        ats_scorer = EnhancedATSScorer()
+        ats_result = ats_scorer.process(request.resume_text, request.job_description)
+        
+        logger.info(f"✅ Custom comparison complete: Match {match_result['match_score']}%, ATS {ats_result['ats_score']}%")
+        
+        return {
+            "match_score": match_result['match_score'],
+            "ats_score": ats_result['ats_score'],
+            "keyword_density": ats_result.get('keyword_analysis', {}).get('keyword_match_rate', 0),
+            "matching_skills": match_result['matching_skills'],
+            "missing_skills": match_result['missing_skills'],
+            "experience_match": match_result['experience_match'],
+            "education_match": match_result['education_match'],
+            "strengths": match_result['strengths'],
+            "concerns": match_result['concerns'],
+            "overall_assessment": match_result['overall_assessment'],
+            "ats_details": {
+                "keyword_analysis": ats_result.get('keyword_analysis', {}),
+                "font_check": ats_result.get('font_check', {}),
+                "layout_check": ats_result.get('layout_check', {}),
+                "structure_analysis": ats_result.get('structure_analysis', {}),
+                "recommendations": ats_result.get('overall_recommendations', [])
+            },
+            "job_requirements": {
+                "required_skills": jd_analysis.get('required_skills', []),
+                "nice_to_have": jd_analysis.get('nice_to_have', []),
+                "experience_years": jd_analysis.get('experience_years', 0),
+                "education": jd_analysis.get('education_required', 'Not specified')
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Custom CV-JD comparison failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")

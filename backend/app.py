@@ -10,7 +10,8 @@ import time
 
 from config import settings
 from database import init_db, SessionLocal
-from routers import jobs, applications, analysis, scrapers, user, analytics
+from routers import jobs, applications, analysis, scrapers, user, analytics, dev
+from routers import seed_real_jobs
 from utils.logger import setup_logger
 from utils.scheduler import setup_scheduler
 
@@ -117,6 +118,8 @@ app.include_router(analysis.router)
 app.include_router(scrapers.router)
 app.include_router(user.router)
 app.include_router(analytics.router)
+app.include_router(dev.router)  # Developer utilities
+app.include_router(seed_real_jobs.router)  # Seed realistic jobs
 
 
 # Global exception handler

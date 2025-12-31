@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Upload, Save, User, Briefcase, Bell, Key } from 'lucide-react'
 import { userApi } from '../lib/api'
@@ -6,9 +6,22 @@ import { userApi } from '../lib/api'
 export default function Settings() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('profile')
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
+    current_title: '',
+    years_experience: 0,
+    search_keywords: '',
+    expected_salary: '',
+    target_roles: '',
+    preferred_locations: '',
+    work_type: 'hybrid',
+  })
 
   // Fetch user profile
-  const { data: profile } = useQuery({
+  const { data: profile, isLoading } = useQuery({
     queryKey: ['profile'],
     queryFn: async () => {
       const response = await userApi.getProfile()
@@ -16,12 +29,34 @@ export default function Settings() {
     },
   })
 
+  // Update form when profile loads
+  React.useEffect(() => {
+    if (profile) {
+      setFormData({
+        name: profile.name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        location: profile.location || '',
+        current_title: profile.current_title || '',
+        years_experience: profile.years_experience || 0,
+        search_keywords: profile.search_keywords || '',
+        expected_salary: profile.expected_salary || '',
+        target_roles: profile.target_roles || '',
+        preferred_locations: profile.preferred_locations || '',
+        work_type: profile.work_type || 'hybrid',
+      })
+    }
+  }, [profile])
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: (data: any) => userApi.updateProfile(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
-      alert('Profile updated successfully!')
+      alert('✅ Profile updated successfully!')
+    },
+    onError: (error: any) => {
+      alert('❌ Failed to update profile: ' + (error.response?.data?.detail || 'Unknown error'))
     },
   })
 
@@ -30,15 +65,33 @@ export default function Settings() {
     mutationFn: (file: File) => userApi.uploadResume(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] })
-      alert('Resume uploaded successfully!')
+      alert('✅ Resume uploaded and parsed successfully!')
+    },
+    onError: (error: any) => {
+      alert('❌ Failed to upload resume: ' + (error.response?.data?.detail || 'Unknown error'))
     },
   })
 
   const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      console.log('Uploading file:', file.name, file.type, file.size)
+      if (file.type !== 'application/pdf' && !file.name.endsWith('.docx')) {
+        alert('Please upload a PDF or DOCX file')
+        return
+      }
       uploadResumeMutation.mutate(file)
     }
+  }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target
+    setFormData(prev => ({ ...prev, [name]: value }))
+  }
+
+  const handleSaveProfile = () => {
+    console.log('Saving profile:', formData)
+    updateProfileMutation.mutate(formData)
   }
 
   const tabs = [
@@ -52,8 +105,8 @@ export default function Settings() {
     <div className="space-y-6">
       {/* Page Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-1">Manage your profile and preferences</p>
+        <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+        <p className="text-gray-600 mt-1">Manage your profile and settings</p>
       </div>
 
       {/* Tabs */}
@@ -95,7 +148,10 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={profile?.name || ''}
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Enter your full name"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -105,7 +161,10 @@ export default function Settings() {
                     </label>
                     <input
                       type="email"
-                      defaultValue={profile?.email || ''}
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="your.email@example.com"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -115,7 +174,10 @@ export default function Settings() {
                     </label>
                     <input
                       type="tel"
-                      defaultValue={profile?.phone || ''}
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      placeholder="+49 123 456 7890"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
@@ -125,30 +187,64 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      defaultValue={profile?.current_title || ''}
+                      name="current_title"
+                      value={formData.current_title}
+                      onChange={handleInputChange}
+                      placeholder="Senior Software Engineer"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      LinkedIn URL
+                      Location
                     </label>
                     <input
-                      type="url"
-                      defaultValue={profile?.linkedin_url || ''}
+                      type="text"
+                      name="location"
+                      value={formData.location}
+                      onChange={handleInputChange}
+                      placeholder="Berlin, Germany"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      GitHub URL
+                      Years of Experience
                     </label>
                     <input
-                      type="url"
-                      defaultValue={profile?.github_url || ''}
+                      type="number"
+                      name="years_experience"
+                      value={formData.years_experience}
+                      onChange={handleInputChange}
+                      placeholder="5"
+                      min="0"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
+                </div>
+              </div>
+
+              {/* Job Search Keywords Section */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">Job Search Keywords</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Enter job titles or keywords to automatically fetch relevant job openings (comma-separated)
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Keywords
+                  </label>
+                  <input
+                    type="text"
+                    name="search_keywords"
+                    value={formData.search_keywords || ''}
+                    onChange={handleInputChange}
+                    placeholder="Machine Learning Engineer, Data Scientist, MLOps Engineer, AI Engineer"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Example: "Software Engineer, Backend Developer, Python Developer"
+                  </p>
                 </div>
               </div>
 
@@ -178,9 +274,13 @@ export default function Settings() {
               </div>
 
               <div className="flex justify-end">
-                <button className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                <button 
+                  onClick={handleSaveProfile}
+                  disabled={updateProfileMutation.isPending}
+                  className="flex items-center space-x-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
                   <Save className="h-4 w-4" />
-                  <span>Save Changes</span>
+                  <span>{updateProfileMutation.isPending ? 'Saving...' : 'Save Changes'}</span>
                 </button>
               </div>
             </div>

@@ -45,9 +45,19 @@ class Job(Base):
     
     def to_dict(self):
         """Convert to dictionary for API responses"""
+        # Extract languages from requirements if available
+        languages = []
+        if self.requirements:
+            req_lower = self.requirements.lower()
+            if 'english' in req_lower:
+                languages.append('English')
+            if 'german' in req_lower and 'fluent' not in req_lower:
+                languages.append('German (basic/intermediate)')
+        
         return {
             "id": self.id,
             "title": self.title,
+            "languages": languages,
             "company": self.company,
             "location": self.location,
             "salary": self.salary,
@@ -100,20 +110,36 @@ class JobAnalysis(Base):
     def to_dict(self):
         """Convert to dictionary for API responses"""
         import json
+        
+        # Helper to parse JSON or return default
+        def safe_json_parse(value, default):
+            if not value:
+                return default
+            try:
+                return json.loads(value)
+            except (json.JSONDecodeError, TypeError):
+                # If it's a plain string, try to convert to appropriate type
+                if isinstance(default, list):
+                    # Split comma-separated string
+                    return [s.strip() for s in value.split(',') if s.strip()]
+                elif isinstance(default, dict):
+                    return {"general": value} if value else {}
+                return default
+        
         return {
             "id": self.id,
             "job_id": self.job_id,
             "match_score": self.match_score,
             "ats_score": self.ats_score,
-            "matching_skills": json.loads(self.matching_skills) if self.matching_skills else [],
-            "missing_skills": json.loads(self.missing_skills) if self.missing_skills else [],
+            "matching_skills": safe_json_parse(self.matching_skills, []),
+            "missing_skills": safe_json_parse(self.missing_skills, []),
             "experience_match": self.experience_match,
             "salary_match": self.salary_match,
             "keyword_density": self.keyword_density,
-            "recommendations": json.loads(self.recommendations) if self.recommendations else {},
+            "recommendations": safe_json_parse(self.recommendations, {}),
             "tailored_resume": self.tailored_resume,
             "tailored_cover_letter": self.tailored_cover_letter,
-            "interview_questions": json.loads(self.interview_questions) if self.interview_questions else [],
+            "interview_questions": safe_json_parse(self.interview_questions, []),
             "analyzed_at": self.analyzed_at.isoformat() if self.analyzed_at else None,
         }
 

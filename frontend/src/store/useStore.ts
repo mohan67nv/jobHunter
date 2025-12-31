@@ -12,6 +12,7 @@ interface AppState {
   // Filters
   filters: FilterOptions
   setFilters: (filters: FilterOptions) => void
+  removeFilter: (key: keyof FilterOptions) => void
   resetFilters: () => void
 
   // UI state
@@ -31,6 +32,11 @@ export const useStore = create<AppState>((set) => ({
   // Filters
   filters: {},
   setFilters: (filters) => set((state) => ({ filters: { ...state.filters, ...filters } })),
+  removeFilter: (key) => set((state) => {
+    const newFilters = { ...state.filters }
+    delete newFilters[key]
+    return { filters: newFilters }
+  }),
   resetFilters: () => set({ filters: {} }),
 
   // UI state

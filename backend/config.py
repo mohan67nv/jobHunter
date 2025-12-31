@@ -21,16 +21,19 @@ class Settings(BaseSettings):
     gemini_api_key: Optional[str] = None
     anthropic_api_key: Optional[str] = None
     openai_api_key: Optional[str] = None
+    perplexity_api_key: Optional[str] = None
+    rovodev_api_key: Optional[str] = None
     
     # Scraping Configuration
     user_agent: str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
     scrape_delay_min: int = 2
     scrape_delay_max: int = 5
     max_jobs_per_source: int = 500
+    max_total_jobs: int = 5000  # Maximum jobs to store in database
     
     # Scheduler
-    scrape_interval_hours: int = 2
-    analysis_interval_hours: int = 4
+    scrape_interval_hours: int = 2  # Auto-scrape every 2 hours
+    analysis_interval_hours: int = 2  # Analyze every 2 hours
     
     # Email Notifications
     email_enabled: bool = False

@@ -8,10 +8,12 @@ from sqlalchemy.orm import Session
 from models.job import Job
 from models.scraping_log import ScrapingLog
 from models.company import Company
+from models.user import UserProfile
 from scrapers.arbeitsagentur import ArbeitsagenturScraper
 from scrapers.jobspy_scraper import JobSpyScraper
 from scrapers.aggregators import KimetaScraper, JobliftScraper, JoobleScraper
 from scrapers.company_scraper import CompanyScraper
+from scrapers.german_job_boards import StepStoneScraper, XINGJobsScraper, MonsterDeScraper, FinestJobsScraper
 from utils.deduplicator import Deduplicator
 from utils.logger import setup_logger
 
@@ -31,13 +33,17 @@ class ScraperManager:
         self.db = db
         self.deduplicator = Deduplicator(db)
         
-        # Initialize all scrapers
+        # Initialize all scrapers (German boards + aggregators)
         self.scrapers = {
             'arbeitsagentur': ArbeitsagenturScraper(),
-            'jobspy': JobSpyScraper(),
-            'kimeta': KimetaScraper(),
-            'joblift': JobliftScraper(),
-            'jooble': JoobleScraper(),
+            'jobspy': JobSpyScraper(),  # Indeed, LinkedIn, Glassdoor, ZipRecruiter
+            'kimeta': KimetaScraper(),  # Meta-aggregator (2000+ sources)
+            'joblift': JobliftScraper(),  # Meta-aggregator (4000+ sources)
+            'jooble': JoobleScraper(),  # Aggregator
+            'stepstone': StepStoneScraper(),  # Premium German board
+            'xing': XINGJobsScraper(),  # German professional network
+            'monster': MonsterDeScraper(),  # Traditional board
+            'finest': FinestJobsScraper(),  # Direct company postings
             'company': CompanyScraper(),
         }
     
@@ -56,8 +62,18 @@ class ScraperManager:
         """
         logger.info(f"🚀 Starting scraping for '{keyword}' in '{location}'")
         
-        if sources is None:
-            sources = ['arbeitsagentur', 'kimeta', 'joblift', 'jooble']
+        # Default to major German boards + aggregators for comprehensive coverage
+        if sources is None or sources == ['all']:
+            sources = [
+                'jobspy',  # LinkedIn, Indeed, Glassdoor (100+ jobs)
+                'kimeta',  # Meta-aggregator (covers 2000+ sources)
+                'joblift',  # Meta-aggregator (covers 4000+ sources)
+                'arbeitsagentur',  # German federal agency
+                'stepstone',  # Premium German board
+                'xing',  # German professional network
+                'monster',  # Traditional board
+                'finest',  # Direct company postings
+            ]
         
         all_jobs = []
         stats = {
@@ -90,8 +106,11 @@ class ScraperManager:
                 completed_at = datetime.now()
                 duration = (completed_at - started_at).total_seconds()
                 
-                # Save jobs to database
+                # Save jobs to database with deduplication
                 new_count, updated_count = self._save_jobs(jobs)
+                
+                # Cleanup old jobs if we exceed max limit
+                self._cleanup_old_jobs()
                 
                 # Log scraping session
                 self._log_scraping(source, len(jobs), new_count, updated_count, 
@@ -197,7 +216,7 @@ class ScraperManager:
     
     def _save_jobs(self, jobs: List[Dict]) -> tuple:
         """
-        Save jobs to database
+        Save jobs to database with filtering
         
         Args:
             jobs: List of job dictionaries
@@ -210,6 +229,35 @@ class ScraperManager:
         
         for job_data in jobs:
             try:
+                # FILTER 1: Skip internships
+                title = job_data.get('title', '').lower()
+                job_type = job_data.get('job_type', '').lower()
+                if 'intern' in title or 'praktikum' in title or 'internship' in job_type:
+                    logger.debug(f"Skipping internship: {job_data.get('title')}")
+                    continue
+                
+                # FILTER 2: Skip jobs requiring fluent German
+                description = (job_data.get('description', '') or '').lower()
+                requirements = (job_data.get('requirements', '') or '').lower()
+                combined_text = f"{description} {requirements}"
+                
+                german_required_patterns = [
+                    'fluent german', 'fließend deutsch', 'fliessend deutsch',
+                    'german fluency', 'deutsch fließend', 'deutsch fliessend',
+                    'native german', 'muttersprachler deutsch',
+                    'verhandlungssicher deutsch', 'verhandlungssichere deutschkenntnisse',
+                    'c1 deutsch', 'c2 deutsch'
+                ]
+                
+                if any(pattern in combined_text for pattern in german_required_patterns):
+                    logger.debug(f"Skipping job requiring fluent German: {job_data.get('title')}")
+                    continue
+                
+                # FILTER 3: Only full-time jobs
+                if job_type and job_type not in ['full-time', 'full time', 'fulltime', 'vollzeit', '']:
+                    logger.debug(f"Skipping non-fulltime job: {job_data.get('title')}")
+                    continue
+                
                 # Check if job already exists by URL
                 existing = self.db.query(Job).filter(Job.url == job_data['url']).first()
                 
@@ -238,6 +286,37 @@ class ScraperManager:
             self.db.rollback()
         
         return new_count, updated_count
+    
+    def _cleanup_old_jobs(self):
+        """Clean up old jobs if database exceeds max limit"""
+        from config import settings
+        
+        try:
+            # Count total active jobs
+            total_jobs = self.db.query(Job).filter(Job.is_active == True).count()
+            max_jobs = getattr(settings, 'max_total_jobs', 5000)
+            
+            if total_jobs > max_jobs:
+                # Calculate how many to delete
+                to_delete = total_jobs - max_jobs
+                
+                logger.info(f"🗑️  Database has {total_jobs} jobs (max: {max_jobs}). Deleting {to_delete} oldest jobs...")
+                
+                # Get oldest jobs (by posted_date)
+                old_jobs = self.db.query(Job)\
+                    .filter(Job.is_active == True)\
+                    .order_by(Job.posted_date.asc())\
+                    .limit(to_delete)\
+                    .all()
+                
+                for job in old_jobs:
+                    job.is_active = False  # Soft delete
+                
+                self.db.commit()
+                logger.info(f"✅ Deactivated {to_delete} old jobs")
+        except Exception as e:
+            logger.error(f"Error cleaning up old jobs: {e}")
+            self.db.rollback()
     
     def _log_scraping(self, source: str, jobs_found: int, jobs_new: int, 
                      jobs_updated: int, status: str, error_message: Optional[str],

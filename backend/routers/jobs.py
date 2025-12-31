@@ -2,7 +2,7 @@
 Job endpoints - CRUD operations for jobs
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload, contains_eager
 from typing import List, Optional
 from datetime import datetime, timedelta
 from database import get_db
@@ -19,6 +19,9 @@ def list_jobs(
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=100),
     source: Optional[str] = None,
+    job_type: Optional[str] = None,
+    remote_type: Optional[str] = None,
+    experience_level: Optional[str] = None,
     min_match_score: Optional[float] = None,
     posted_after: Optional[str] = None,
     search: Optional[str] = None,
@@ -31,6 +34,9 @@ def list_jobs(
     - **page**: Page number (1-indexed)
     - **page_size**: Number of jobs per page
     - **source**: Filter by source (LinkedIn, Indeed, etc.)
+    - **job_type**: Filter by job type (full-time, contract, etc.)
+    - **remote_type**: Filter by remote type (remote, hybrid, on-site)
+    - **experience_level**: Filter by experience level (entry, mid, senior, lead)
     - **min_match_score**: Minimum match score (0-100)
     - **posted_after**: ISO date string (e.g., "2024-01-01")
     - **search**: Search in title, company, location
@@ -44,6 +50,15 @@ def list_jobs(
     
     if source:
         query = query.filter(Job.source == source)
+    
+    if job_type:
+        query = query.filter(Job.job_type == job_type)
+    
+    if remote_type:
+        query = query.filter(Job.remote_type == remote_type)
+    
+    if experience_level:
+        query = query.filter(Job.experience_level == experience_level)
     
     if posted_after:
         try:
@@ -62,10 +77,21 @@ def list_jobs(
     
     # Filter by match score if provided
     if min_match_score is not None:
-        query = query.join(JobAnalysis).filter(JobAnalysis.match_score >= min_match_score)
+        # Use subquery to filter, then eager load analysis
+        query = query.filter(
+            Job.id.in_(
+                db.query(Job.id)
+                .join(JobAnalysis)
+                .filter(JobAnalysis.match_score >= min_match_score)
+            )
+        )
     
-    # Get total count
+    # Always eager load analysis for all results
+    query = query.options(joinedload(Job.analysis))
+    
+    # Get total count (all matching jobs in database)
     total = query.count()
+    logger.info(f"📊 Found {total} jobs in database (page {page}, size {page_size})")
     
     # Apply pagination and sorting
     jobs = query.order_by(Job.posted_date.desc())\
@@ -73,8 +99,21 @@ def list_jobs(
         .limit(page_size)\
         .all()
     
+    # Convert jobs to dict and add match_score from analysis if exists
+    jobs_list = []
+    for job in jobs:
+        job_dict = job.to_dict()
+        # Add match score from analysis if available
+        if job.analysis:
+            job_dict['match_score'] = job.analysis.match_score
+            job_dict['ats_score'] = job.analysis.ats_score
+        else:
+            job_dict['match_score'] = None
+            job_dict['ats_score'] = None
+        jobs_list.append(job_dict)
+    
     return JobListResponse(
-        jobs=[job.to_dict() for job in jobs],
+        jobs=jobs_list,
         total=total,
         page=page,
         page_size=page_size

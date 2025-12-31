@@ -26,6 +26,7 @@ export interface Job {
   view_count: number
   created_at: string
   updated_at: string
+  languages?: string[]
 }
 
 export interface JobAnalysis {
@@ -99,6 +100,9 @@ export interface DashboardStats {
 
 export interface FilterOptions {
   source?: string
+  job_type?: string
+  remote_type?: string
+  experience_level?: string
   min_match_score?: number
   posted_after?: string
   search?: string

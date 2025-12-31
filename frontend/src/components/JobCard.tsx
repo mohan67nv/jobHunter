@@ -68,6 +68,12 @@ export default function JobCard({ job, analysis, onClick }: JobCardProps) {
           </div>
         )}
 
+        {job.languages && job.languages.length > 0 && (
+          <div className="text-sm text-gray-600">
+            🗣️ {job.languages.join(', ')}
+          </div>
+        )}
+
         <div className="flex items-center text-sm text-gray-500">
           <Calendar className="h-4 w-4 mr-2" />
           <span>Posted {formatRelativeTime(job.posted_date)}</span>
