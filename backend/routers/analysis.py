@@ -30,24 +30,56 @@ def analyze_job(
     db: Session = Depends(get_db)
 ):
     """
-    Run AI analysis on job
+    Run full AI analysis on job with multi-layer ATS scoring
     
     - **job_id**: ID of job to analyze
     - **generate_materials**: Whether to generate tailored resume/cover letter
+    
+    Analysis includes:
+    1. Job description parsing (DeepSeek Coder)
+    2. Resume-JD matching (DeepSeek Chat)
+    3. 3-layer ATS scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+    4. Tailored materials generation (optional)
+    5. Company research & interview prep (GPT-5-mini)
+    
+    Expected time: 20-40 seconds for complete analysis
     """
     job = db.query(Job).get(job_id)
     
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
     
+    # Check user profile exists
+    user = db.query(UserProfile).filter(UserProfile.id == 1).first()
+    if not user or not user.resume_text:
+        raise HTTPException(status_code=400, detail="No resume found. Upload resume in Profile first.")
+    
     # Run analysis in background
     def run_analysis():
-        agent_manager = AgentManager(db)
-        agent_manager.analyze_job(job_id, generate_materials)
+        try:
+            agent_manager = AgentManager(db)
+            result = agent_manager.analyze_job(job_id, generate_materials)
+            if result:
+                logger.info(f"✅ Analysis completed successfully for job {job_id}")
+            else:
+                logger.error(f"❌ Analysis failed for job {job_id}")
+        except Exception as e:
+            logger.error(f"❌ Error in background analysis for job {job_id}: {e}")
     
     background_tasks.add_task(run_analysis)
     
-    return {"message": "Analysis started", "job_id": job_id}
+    return {
+        "message": "AI analysis started (3-layer ATS with detailed feedback)",
+        "job_id": job_id,
+        "estimated_time": "20-40 seconds",
+        "steps": [
+            "1. Analyzing job description",
+            "2. Matching resume to job",
+            "3. Running 3-layer ATS scoring",
+            "4. Generating tailored materials" if generate_materials else "4. Skipping materials",
+            "5. Researching company"
+        ]
+    }
 
 
 @router.post("/batch-analyze")

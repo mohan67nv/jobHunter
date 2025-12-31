@@ -33,9 +33,11 @@ class AgentManager:
         # Initialize all agents - each uses optimal model from model_config.py
         self.analyzer = JDAnalyzer()              # DeepSeek Coder - fast parsing
         self.matcher = ResumeMatcher()            # DeepSeek Chat - matching
-        self.ats_scorer = EnhancedATSScorer()     # DeepSeek Chat - ATS scoring
+        self.ats_scorer = EnhancedATSScorer(use_multi_layer=True)  # 3-layer AI scoring
         self.optimizer = ApplicationOptimizer()   # DeepSeek Coder - optimization
         self.researcher = CompanyResearcher()     # GPT-5-mini - research
+        
+        logger.info("✅ AgentManager initialized with multi-layer ATS scoring")
     
     def analyze_job(self, job_id: int, generate_materials: bool = True) -> Optional[JobAnalysis]:
         """
@@ -75,12 +77,14 @@ class AgentManager:
                 jd_analysis
             )
             
-            # Step 3: Calculate ATS Score
-            logger.info("  3/5: Calculating ATS score...")
+            # Step 3: Calculate ATS Score (Multi-Layer: DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+            logger.info("  3/5: Running 3-layer ATS scoring (this may take 10-15 seconds)...")
             ats_analysis = self.ats_scorer.process(
                 user.resume_text,
-                job.description
+                job.description,
+                tier='premium'  # Always use full feedback
             )
+            logger.info(f"     ✓ ATS Score: {ats_analysis.get('final_score', ats_analysis.get('ats_score', 0))}")
             
             # Step 4: Generate Optimized Materials
             tailored_resume = None
@@ -144,19 +148,51 @@ class AgentManager:
                          interview_questions: list) -> Dict:
         """Combine all analysis results into single structure"""
         
-        # Extract ATS score from enhanced analysis
-        if isinstance(ats_analysis, dict) and 'ats_score' in ats_analysis:
-            ats_score = ats_analysis['ats_score']
+        # Extract ATS score (support both multi-layer and legacy format)
+        if isinstance(ats_analysis, dict):
+            # Multi-layer format has 'final_score', legacy has 'ats_score'
+            ats_score = ats_analysis.get('final_score', ats_analysis.get('ats_score', 70))
         else:
             ats_score = 70  # Fallback
         
         # Extract matching skills from match analysis
         matching_skills = [s['skill'] for s in match_analysis.get('matching_skills', [])]
         
-        # Extract missing keywords from enhanced ATS analysis
+        # Extract missing keywords and detailed feedback from ATS analysis
         missing_keywords = []
+        ats_recommendations = []
+        
+        # Multi-layer ATS format
+        if 'detailed_feedback' in ats_analysis and ats_analysis['detailed_feedback']:
+            feedback = ats_analysis['detailed_feedback']
+            
+            # Extract immediate fixes
+            if 'immediate_fixes' in feedback:
+                for fix in feedback.get('immediate_fixes', [])[:3]:
+                    if isinstance(fix, dict):
+                        ats_recommendations.append(f"🎯 {fix.get('action', '')} (Impact: {fix.get('impact', '')})") 
+            
+            # Extract strategic improvements
+            if 'strategic_improvements' in feedback:
+                for improvement in feedback.get('strategic_improvements', [])[:2]:
+                    if isinstance(improvement, dict):
+                        ats_recommendations.append(f"📈 {improvement.get('action', '')}")
+            
+            # Extract overall recommendation
+            if 'overall_recommendation' in feedback:
+                ats_recommendations.insert(0, f"💡 {feedback['overall_recommendation']}")
+        
+        # Legacy format fallback
         if 'keyword_analysis' in ats_analysis:
             missing_keywords = ats_analysis['keyword_analysis'].get('missing_critical_keywords', [])
+        
+        # If no detailed feedback, use basic recommendations
+        if not ats_recommendations:
+            ats_recommendations = ats_analysis.get('recommendations', [
+                "Optimize resume keywords to match job description",
+                "Quantify achievements with specific metrics",
+                "Use ATS-friendly formatting"
+            ])
         
         # Calculate keyword density
         keyword_density = 0
@@ -165,18 +201,18 @@ class AgentManager:
         keyword_match = ats_analysis.get('keyword_match', 0)
         keyword_density = keyword_match  # Simplified
         
-        # Combine recommendations
+        # Combine recommendations with detailed feedback from multi-layer ATS
         recommendations = {
-            'resume': ats_analysis.get('recommendations', []),
+            'resume': ats_recommendations,  # Now includes detailed feedback from DeepSeek Reasoner
             'cover_letter': [
                 f"Emphasize: {', '.join(matching_skills[:3])}" if matching_skills else "Highlight relevant skills",
                 "Include specific achievements with metrics",
                 "Show enthusiasm for company and role"
             ],
             'interview': [
-                "Prepare STAR method examples",
-                "Research company recent news",
-                "Practice technical questions"
+                "Prepare STAR method examples for key achievements",
+                "Research company recent news and developments",
+                "Practice technical questions based on job requirements"
             ]
         }
         
@@ -194,13 +230,13 @@ class AgentManager:
         
         return {
             'match_score': match_analysis.get('match_score', 0),
-            'ats_score': ats_analysis.get('ats_score', 0),
+            'ats_score': ats_score,  # Now from multi-layer scoring (30% + 40% + 30%)
             'matching_skills': json.dumps(matching_skills),
             'missing_skills': json.dumps(match_analysis.get('missing_skills', [])),
             'experience_match': exp_match_level,
             'salary_match': salary_match,
             'keyword_density': keyword_density,
-            'recommendations': json.dumps(recommendations),
+            'recommendations': json.dumps(recommendations),  # Includes DeepSeek Reasoner feedback
             'tailored_resume': tailored_resume,
             'tailored_cover_letter': tailored_cover_letter,
             'interview_questions': json.dumps(interview_questions),

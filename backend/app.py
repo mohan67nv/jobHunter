@@ -142,5 +142,6 @@ if __name__ == "__main__":
         "app:app",
         host="0.0.0.0",
         port=8000,
-        reload=settings.debug
+        reload=settings.debug,
+        timeout_keep_alive=300  # 5 minutes for long AI analysis
     )
