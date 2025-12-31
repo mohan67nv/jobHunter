@@ -100,7 +100,7 @@ export default function Settings() {
   }
 
   const tabs = [
-    { id: 'profile', label: 'Profile', icon: User },
+    { id: 'profile', label: 'Account', icon: User },
     { id: 'preferences', label: 'Preferences', icon: Briefcase },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'api', label: 'API Keys', icon: Key },
@@ -299,16 +299,35 @@ export default function Settings() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Keywords (comma-separated)
+                      Add Keywords (comma-separated)
+                      <span className="text-xs text-gray-500 ml-2">💡 These will be added to your existing keywords</span>
                     </label>
-                    <input
-                      type="text"
-                      name="keywords"
-                      value={preferencesData.keywords}
-                      onChange={handlePreferencesChange}
-                      placeholder="Data Scientist, Machine Learning, Python"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    <textarea
+                      name="search_keywords"
+                      value={formData.search_keywords}
+                      onChange={handleInputChange}
+                      placeholder="Add new keywords like: Deep Learning, NLP Engineer, Computer Vision..."
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                     />
+                    <p className="mt-1 text-xs text-gray-500">
+                      💡 Tip: Your existing keywords are shown below. New keywords you type here will be added to them.
+                    </p>
+                    {profile?.search_keywords && (
+                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-xs font-medium text-blue-700 mb-2">✓ Current Saved Keywords ({profile.search_keywords.split(',').length}):</p>
+                        <div className="flex flex-wrap gap-2">
+                          {profile.search_keywords.split(',').map((keyword, idx) => (
+                            <span
+                              key={idx}
+                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
+                            >
+                              {keyword.trim()}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -316,9 +335,9 @@ export default function Settings() {
                     </label>
                     <input
                       type="text"
-                      name="locations"
-                      value={preferencesData.locations}
-                      onChange={handlePreferencesChange}
+                      name="preferred_locations"
+                      value={formData.preferred_locations}
+                      onChange={handleInputChange}
                       placeholder="Munich, Berlin, Remote"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
@@ -329,15 +348,42 @@ export default function Settings() {
                     </label>
                     <input
                       type="number"
-                      name="salary_min"
-                      value={preferencesData.salary_min}
-                      onChange={handlePreferencesChange}
+                      name="expected_salary"
+                      value={formData.expected_salary}
+                      onChange={handleInputChange}
                       placeholder="60000"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
               </div>
+
+              {/* Currently Saved Keywords Summary */}
+              {profile?.search_keywords && (
+                <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-300 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <h4 className="text-sm font-bold text-gray-800 mb-2">
+                        🎯 Your Current Keywords (Used for Match Score)
+                      </h4>
+                      <div className="flex flex-wrap gap-2 mb-3">
+                        {profile.search_keywords.split(',').map((keyword, idx) => (
+                          <span
+                            key={idx}
+                            className="px-3 py-1.5 bg-white border-2 border-blue-400 text-blue-700 rounded-full text-sm font-semibold shadow-sm"
+                          >
+                            {keyword.trim()}
+                          </span>
+                        ))}
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        💡 These keywords are matched against job titles and descriptions. 
+                        Jobs matching these keywords get higher scores (30% weight in algorithm).
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="flex justify-end">
                 <button 

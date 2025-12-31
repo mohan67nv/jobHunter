@@ -22,11 +22,12 @@ def get_overview(db: Session = Depends(get_db)):
     # Total jobs
     total_jobs = db.query(Job).filter(Job.is_active == True, Job.is_duplicate == False).count()
     
-    # New jobs today
+    # New jobs today (exclude duplicates)
     today = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
     new_today = db.query(Job).filter(
         Job.scraped_date >= today,
-        Job.is_active == True
+        Job.is_active == True,
+        Job.is_duplicate == False
     ).count()
     
     # High match jobs (80%+)

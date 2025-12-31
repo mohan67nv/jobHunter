@@ -30,6 +30,13 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
   }
 
   const matchScore = analysis?.match_score || 0
+  
+  // Check if we have FULL analysis (with tailored materials) or just basic match score
+  const hasFullAnalysis = analysis && (
+    analysis.tailored_resume || 
+    analysis.tailored_cover_letter || 
+    (analysis.recommendations && Object.keys(analysis.recommendations).length > 0)
+  )
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -137,7 +144,7 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
               {/* Right: AI Analysis (1/3) */}
               <div className="space-y-6">
                 {/* Match Score */}
-                {analysis ? (
+                {hasFullAnalysis ? (
                   <>
                     <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6">
                       <h3 className="text-lg font-semibold mb-4">AI Analysis</h3>

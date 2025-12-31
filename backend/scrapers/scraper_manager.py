@@ -224,7 +224,7 @@ class ScraperManager:
     
     def _save_jobs(self, jobs: List[Dict]) -> tuple:
         """
-        Save jobs to database with filtering
+        Save jobs to database with filtering and immediate match score calculation
         
         Args:
             jobs: List of job dictionaries
@@ -234,6 +234,7 @@ class ScraperManager:
         """
         new_count = 0
         updated_count = 0
+        new_job_ids = []  # Track new jobs for match score calculation
         
         for job_data in jobs:
             try:
@@ -294,6 +295,57 @@ class ScraperManager:
             self.db.rollback()
         
         return new_count, updated_count
+    
+    def _calculate_match_scores_for_jobs(self, job_ids: List[int]):
+        """Calculate match scores immediately for specific jobs"""
+        from ai_agents.matcher import ResumeMatcher
+        from models.user import UserProfile
+        from models.job import JobAnalysis
+        
+        try:
+            # Get user profile
+            user = self.db.query(UserProfile).first()
+            if not user:
+                logger.debug("No user profile found, skipping match score calculation")
+                return
+            
+            # Check if user has resume to match against
+            if not user.resume_text:
+                logger.debug("User profile has no resume, skipping match calculation")
+                return
+            
+            matcher = ResumeMatcher()
+            scored_count = 0
+            
+            for job_id in job_ids:
+                try:
+                    job = self.db.query(Job).filter(Job.id == job_id).first()
+                    if not job:
+                        continue
+                    
+                    # Calculate match score using ResumeMatcher
+                    result = matcher.analyze_job_fit(job, user)
+                    
+                    # Create analysis record
+                    analysis = JobAnalysis(
+                        job_id=job.id,
+                        match_score=result.get('match_score', 0),
+                        matching_skills=', '.join(result.get('skills_matched', [])),
+                        missing_skills=', '.join(result.get('skills_missing', [])),
+                    )
+                    self.db.add(analysis)
+                    scored_count += 1
+                    
+                except Exception as e:
+                    logger.error(f"Error calculating match score for job {job_id}: {e}")
+                    continue
+            
+            if scored_count > 0:
+                self.db.commit()
+                logger.info(f"✅ Calculated match scores for {scored_count} new jobs")
+                
+        except Exception as e:
+            logger.error(f"Error in match score calculation: {e}")
     
     def _cleanup_old_jobs(self):
         """Clean up old jobs if database exceeds max limit"""

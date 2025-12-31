@@ -3,6 +3,7 @@ Job endpoints - CRUD operations for jobs
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload, contains_eager
+from sqlalchemy import or_
 from typing import List, Optional
 from datetime import datetime, timedelta
 from database import get_db
@@ -23,6 +24,7 @@ def list_jobs(
     remote_type: Optional[str] = None,
     experience_level: Optional[str] = None,
     min_match_score: Optional[float] = None,
+    hide_unscored: bool = False,
     posted_after: Optional[str] = None,
     search: Optional[str] = None,
     include_duplicates: bool = False,
@@ -77,24 +79,30 @@ def list_jobs(
     
     # Filter by match score if provided
     if min_match_score is not None:
-        # Use subquery to filter, then eager load analysis
-        query = query.filter(
-            Job.id.in_(
-                db.query(Job.id)
-                .join(JobAnalysis)
-                .filter(JobAnalysis.match_score >= min_match_score)
+        if hide_unscored:
+            # STRICT MODE: Only show jobs with scores >= threshold
+            # Hide jobs without analysis (unscored) - prevents irrelevant jobs from showing
+            logger.info(f"🎯 STRICT filter: score >= {min_match_score}, hiding unscored jobs")
+            query = query.join(JobAnalysis).filter(JobAnalysis.match_score >= min_match_score)
+        else:
+            # PERMISSIVE MODE: Show scored jobs >= threshold + unscored jobs
+            # Jobs without analysis or with score=0 are shown so user can run AI analysis
+            logger.info(f"🎯 Permissive filter: score >= {min_match_score}, showing unscored jobs")
+            query = query.outerjoin(JobAnalysis).filter(
+                or_(
+                    JobAnalysis.id == None,  # No analysis
+                    JobAnalysis.match_score == 0,  # Unscored
+                    JobAnalysis.match_score >= min_match_score  # Meets threshold
+                )
             )
-        )
     
-    # Always eager load analysis for all results
-    query = query.options(joinedload(Job.analysis))
-    
-    # Get total count (all matching jobs in database)
+    # Get total count BEFORE adding eager load options
     total = query.count()
     logger.info(f"📊 Found {total} jobs in database (page {page}, size {page_size})")
     
-    # Apply pagination and sorting
-    jobs = query.order_by(Job.posted_date.desc())\
+    # Apply pagination, sorting, and eager load analysis
+    jobs = query.options(joinedload(Job.analysis))\
+        .order_by(Job.posted_date.desc())\
         .offset((page - 1) * page_size)\
         .limit(page_size)\
         .all()
@@ -105,12 +113,17 @@ def list_jobs(
         job_dict = job.to_dict()
         # Add match score from analysis if available
         if job.analysis:
+            logger.debug(f"Job {job.id} has analysis: {job.analysis.match_score}")
             job_dict['match_score'] = job.analysis.match_score
             job_dict['ats_score'] = job.analysis.ats_score
         else:
-            job_dict['match_score'] = None
-            job_dict['ats_score'] = None
+            logger.debug(f"Job {job.id} has NO analysis - setting score to 0")
+            # Jobs without scores show 0 (being calculated in background)
+            job_dict['match_score'] = 0
+            job_dict['ats_score'] = 0
         jobs_list.append(job_dict)
+    
+    logger.info(f"📤 Returning {len(jobs_list)} jobs with scores")
     
     return JobListResponse(
         jobs=jobs_list,

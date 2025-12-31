@@ -9,10 +9,10 @@ import JobCard from '../components/JobCard'
 import JobDetailModal from '../components/JobDetailModal'
 import StatsCard from '../components/StatsCard'
 
-// Top 10 job sources
+// Top 10 job sources - MUST match exact database values
 const JOB_SOURCES = [
   { value: 'all', label: 'All Sources' },
-  { value: 'LinkedIn', label: 'LinkedIn' },
+  { value: 'Linkedin', label: 'LinkedIn' },
   { value: 'Indeed', label: 'Indeed' },
   { value: 'StepStone', label: 'StepStone' },
   { value: 'Glassdoor', label: 'Glassdoor' },
@@ -78,10 +78,13 @@ export default function Dashboard() {
     },
   })
 
-  // Fetch jobs
+  // Fetch jobs with minimum match score of 50 to filter irrelevant jobs
+  // Only show scored jobs (score > 0) that meet threshold
   const { data: jobsData, isLoading, refetch } = useJobs(page, {
     ...filters,
     search: searchTerm || undefined,
+    min_match_score: filters.min_match_score !== undefined ? filters.min_match_score : 50, // Default: 50+ score
+    hide_unscored: true, // Hide jobs without match scores (not analyzed yet)
   })
 
   // Fetch analysis for selected job
@@ -131,6 +134,8 @@ export default function Dashboard() {
       const newFilters = { ...filters }
       delete newFilters[key]
       setFilters(newFilters)
+      // Trigger refetch by ensuring filters object reference changes
+      setTimeout(() => refetch(), 0)
     } else if (key === 'posted_after' && value !== 'all') {
       const days = parseInt(value)
       const date = new Date()

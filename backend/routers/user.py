@@ -52,6 +52,27 @@ def update_profile(
     # Update fields
     update_dict = profile_data.dict(exclude_unset=True)
     
+    # Handle search_keywords - append instead of replace
+    if 'search_keywords' in update_dict and update_dict['search_keywords']:
+        new_keywords = update_dict['search_keywords']
+        existing_keywords = user.search_keywords or ""
+        
+        if existing_keywords:
+            # Combine existing and new keywords, remove duplicates
+            existing_set = {k.strip().lower() for k in existing_keywords.split(',')}
+            new_list = [k.strip() for k in new_keywords.split(',') if k.strip()]
+            
+            # Add only new keywords that don't exist
+            for keyword in new_list:
+                if keyword.lower() not in existing_set:
+                    existing_keywords += f", {keyword}"
+            
+            update_dict['search_keywords'] = existing_keywords
+            logger.info(f"Appended keywords. Total: {len(existing_keywords.split(','))}")
+        else:
+            update_dict['search_keywords'] = new_keywords
+            logger.info(f"Set initial keywords: {new_keywords}")
+    
     # Handle JSON fields
     if 'preferences' in update_dict:
         update_dict['preferences'] = json.dumps(update_dict['preferences'])

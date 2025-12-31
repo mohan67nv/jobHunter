@@ -41,6 +41,8 @@ class JobResponse(JobBase):
     view_count: int
     created_at: datetime
     updated_at: datetime
+    match_score: Optional[float] = None  # Match score from JobAnalysis
+    ats_score: Optional[float] = None    # ATS score from JobAnalysis
     
     class Config:
         from_attributes = True

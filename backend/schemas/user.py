@@ -14,6 +14,7 @@ class UserProfileUpdate(BaseModel):
     portfolio_url: Optional[str] = None
     current_title: Optional[str] = None
     years_experience: Optional[int] = None
+    search_keywords: Optional[str] = None
     preferences: Optional[Dict] = None
     target_companies: Optional[List[str]] = None
     blacklisted_companies: Optional[List[str]] = None
@@ -35,6 +36,7 @@ class UserProfileResponse(BaseModel):
     years_experience: Optional[int] = None
     resume_text: str
     resume_pdf_path: Optional[str] = None
+    search_keywords: Optional[str] = None
     preferences: Dict = {}
     target_companies: List[str] = []
     blacklisted_companies: List[str] = []

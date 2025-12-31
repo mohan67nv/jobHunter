@@ -104,6 +104,7 @@ export interface FilterOptions {
   remote_type?: string
   experience_level?: string
   min_match_score?: number
+  hide_unscored?: boolean
   posted_after?: string
   search?: string
 }

@@ -8,9 +8,9 @@ import logging
 from datetime import datetime
 from database import SessionLocal
 from scrapers.scraper_manager import ScraperManager
-from ai_agents.matcher import JobMatcher
+from ai_agents.matcher import ResumeMatcher
 from models.job import Job, JobAnalysis
-from models.user import User
+from models.user import UserProfile
 
 logging.basicConfig(
     level=logging.INFO,
@@ -28,7 +28,7 @@ def run_daily_scraping():
         manager = ScraperManager(db)
         
         # Get user's search keywords from profile
-        user = db.query(User).first()
+        user = db.query(UserProfile).first()
         if user and user.search_keywords:
             keywords = user.search_keywords.split(',')
         else:
@@ -58,17 +58,17 @@ def run_daily_scraping():
 
 
 def calculate_match_scores():
-    """Calculate or update match scores for all jobs without analysis"""
-    logger.info("🧮 Starting match score calculation...")
+    """Calculate match scores for any jobs that were missed during scraping"""
+    logger.info("🧮 Checking for jobs without match scores...")
     
     try:
         db = SessionLocal()
         
-        # Get jobs without analysis or with old analysis
+        # Get jobs without analysis (edge cases that were missed)
         jobs_to_analyze = db.query(Job).outerjoin(JobAnalysis).filter(
             Job.is_active == True,
             (JobAnalysis.id == None)  # No analysis yet
-        ).limit(100).all()  # Process 100 jobs at a time
+        ).limit(50).all()  # Process 50 jobs at a time
         
         if not jobs_to_analyze:
             logger.info("No jobs need analysis")
@@ -78,20 +78,20 @@ def calculate_match_scores():
         logger.info(f"Analyzing {len(jobs_to_analyze)} jobs...")
         
         # Get user profile for matching
-        user = db.query(User).first()
+        user = db.query(UserProfile).first()
         if not user:
             logger.warning("No user profile found, skipping match score calculation")
             db.close()
             return
         
         # Initialize matcher
-        matcher = JobMatcher()
+        matcher = ResumeMatcher()
         
         analyzed_count = 0
         for job in jobs_to_analyze:
             try:
                 # Calculate match score
-                result = matcher.calculate_match_score(job, user)
+                result = matcher.analyze_job_fit(job, user)
                 
                 # Create or update analysis
                 existing_analysis = db.query(JobAnalysis).filter(
@@ -100,20 +100,16 @@ def calculate_match_scores():
                 
                 if existing_analysis:
                     # Update existing
-                    existing_analysis.match_score = result['match_score']
-                    existing_analysis.skills_matched = result['skills_matched']
-                    existing_analysis.skills_missing = result['skills_missing']
-                    existing_analysis.fit_summary = result['fit_summary']
-                    existing_analysis.recommendations = result['recommendations']
+                    existing_analysis.match_score = result.get('match_score', 0)
+                    existing_analysis.matching_skills = ', '.join(result.get('skills_matched', []))
+                    existing_analysis.missing_skills = ', '.join(result.get('skills_missing', []))
                 else:
                     # Create new
                     analysis = JobAnalysis(
                         job_id=job.id,
-                        match_score=result['match_score'],
-                        skills_matched=result['skills_matched'],
-                        skills_missing=result['skills_missing'],
-                        fit_summary=result['fit_summary'],
-                        recommendations=result['recommendations']
+                        match_score=result.get('match_score', 0),
+                        matching_skills=', '.join(result.get('skills_matched', [])),
+                        missing_skills=', '.join(result.get('skills_missing', []))
                     )
                     db.add(analysis)
                 
@@ -142,15 +138,17 @@ def run_scheduler():
     logger.info("=" * 80)
     logger.info("Schedule:")
     logger.info("  - Job scraping: 8:00 AM and 6:00 PM daily")
-    logger.info("  - Match score calculation: Every 2 hours")
+    logger.info("  - Match score calculation: Every 5 minutes (for any missed jobs)")
+    logger.info("  - Note: New jobs get scored immediately during scraping")
     logger.info("=" * 80)
     
     # Schedule daily scraping (twice per day)
     schedule.every().day.at("08:00").do(run_daily_scraping)
     schedule.every().day.at("18:00").do(run_daily_scraping)
     
-    # Schedule match score calculation (every 2 hours)
-    schedule.every(2).hours.do(calculate_match_scores)
+    # Schedule match score calculation every 5 minutes (for any missed jobs)
+    # Note: Most jobs are scored immediately during scraping
+    schedule.every(5).minutes.do(calculate_match_scores)
     
     # Run initial match score calculation on startup
     logger.info("Running initial match score calculation...")
