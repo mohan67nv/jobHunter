@@ -2,7 +2,7 @@
 Application-related Pydantic schemas
 """
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any
 from datetime import datetime
 
 
@@ -32,9 +32,15 @@ class ApplicationResponse(BaseModel):
     applied_date: Optional[datetime] = None
     interview_date: Optional[datetime] = None
     interview_type: Optional[str] = None
+    follow_up_date: Optional[datetime] = None
     notes: Optional[str] = None
+    resume_version: Optional[str] = None
+    cover_letter_used: Optional[str] = None
+    salary_expectation: Optional[str] = None
+    rejection_reason: Optional[str] = None
     created_at: datetime
     updated_at: datetime
+    job: Optional[Dict[str, Any]] = None  # Include job details
     
     class Config:
         from_attributes = True
