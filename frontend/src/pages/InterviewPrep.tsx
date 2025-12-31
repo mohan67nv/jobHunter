@@ -48,10 +48,14 @@ interface TechnicalQA {
   difficulty: string
   category: string
   source?: string
-  project_context?: string
-  explanation_approach?: string
+  project_name?: string
+  how_to_explain?: string
+  what_to_emphasize?: string[]
+  expected_questions?: string[]
+  impressive_metrics?: string[]
   key_points: string[]
-  follow_ups: string[]
+  interview_tip?: string
+  follow_ups?: string[]
 }
 
 interface BehavioralQA {
@@ -135,14 +139,12 @@ export default function InterviewPrep() {
 
   const getSourceBadge = (source?: string) => {
     switch (source) {
-      case 'glassdoor':
-        return { text: 'Glassdoor', color: 'bg-emerald-100 text-emerald-800', icon: '🔍' }
-      case 'candidate_report':
-        return { text: 'Real Interview', color: 'bg-teal-100 text-teal-800', icon: '👤' }
-      case 'candidate_project':
+      case 'employee_experience':
+        return { text: 'Employee Experience', color: 'bg-emerald-100 text-emerald-800', icon: '💼' }
+      case 'job_requirements':
+        return { text: 'Job Requirements', color: 'bg-blue-100 text-blue-800', icon: '📋' }
+      case 'resume_project':
         return { text: 'Your Project', color: 'bg-purple-100 text-purple-800', icon: '🎯' }
-      case 'job_description':
-        return { text: 'Job-Specific', color: 'bg-blue-100 text-blue-800', icon: '📋' }
       default:
         return null
     }
@@ -473,7 +475,7 @@ export default function InterviewPrep() {
                                 mention trade-offs, and discuss scalability considerations.
                               </p>
                               <p className="text-blue-800 text-sm">
-                                💡 Questions include: Real interview questions from Glassdoor, job-specific questions, and personalized questions about YOUR projects and experience.
+                                💡 Questions include: Employee interview experiences, job requirement analysis, and guidance on explaining YOUR projects impressively.
                               </p>
                             </div>
                             {technicalQA.map((qa, idx) => {
@@ -497,9 +499,9 @@ export default function InterviewPrep() {
                                             {sourceBadge.icon} {sourceBadge.text}
                                           </span>
                                         )}
-                                        {qa.project_context && (
+                                        {qa.project_name && (
                                           <span className="text-xs bg-indigo-100 text-indigo-800 px-2 py-1 rounded-full font-semibold">
-                                            📁 {qa.project_context}
+                                            📁 {qa.project_name}
                                           </span>
                                         )}
                                       </div>
@@ -513,16 +515,48 @@ export default function InterviewPrep() {
                                   </button>
                                   {expandedItems.has(1000 + idx) && (
                                     <div className="px-4 pb-4 border-t border-gray-200 space-y-3">
-                                      {qa.explanation_approach && (
-                                        <div className="bg-purple-50 border-l-4 border-purple-400 p-3">
-                                          <div className="text-sm font-semibold text-purple-900 mb-1">💡 How to Explain This:</div>
-                                          <p className="text-purple-800 text-sm">{qa.explanation_approach}</p>
+                                      {qa.how_to_explain && (
+                                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 border-l-4 border-purple-500 p-4 rounded-r-lg">
+                                          <div className="text-sm font-bold text-purple-900 mb-2 flex items-center gap-2">
+                                            <span className="text-lg">🎯</span> How to Explain This Impressively:
+                                          </div>
+                                          <p className="text-purple-900 leading-relaxed">{qa.how_to_explain}</p>
                                         </div>
                                       )}
+                                      
+                                      {qa.what_to_emphasize && qa.what_to_emphasize.length > 0 && (
+                                        <div className="bg-amber-50 border-l-4 border-amber-500 p-3 rounded-r-lg">
+                                          <div className="text-sm font-semibold text-amber-900 mb-2">⭐ What to Emphasize:</div>
+                                          <ul className="space-y-1">
+                                            {qa.what_to_emphasize.map((point, eidx) => (
+                                              <li key={eidx} className="flex items-start gap-2">
+                                                <span className="text-amber-600 font-bold">→</span>
+                                                <span className="text-amber-900 text-sm font-medium">{point}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      
+                                      {qa.impressive_metrics && qa.impressive_metrics.length > 0 && (
+                                        <div className="bg-green-50 border-l-4 border-green-500 p-3 rounded-r-lg">
+                                          <div className="text-sm font-semibold text-green-900 mb-2">📊 Impressive Metrics to Highlight:</div>
+                                          <ul className="space-y-1">
+                                            {qa.impressive_metrics.map((metric, midx) => (
+                                              <li key={midx} className="flex items-start gap-2">
+                                                <span className="text-green-600 font-bold">✓</span>
+                                                <span className="text-green-900 text-sm font-medium">{metric}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      
                                       <div className="bg-blue-50 p-4 rounded-lg">
                                         <div className="text-sm font-semibold text-blue-900 mb-2">Answer:</div>
                                         <p className="text-gray-700 leading-relaxed whitespace-pre-wrap">{qa.answer}</p>
                                       </div>
+                                      
                                       <div>
                                         <div className="text-sm font-semibold text-gray-700 mb-2">Key Points:</div>
                                         <ul className="space-y-1">
@@ -534,8 +568,27 @@ export default function InterviewPrep() {
                                           ))}
                                         </ul>
                                       </div>
+                                      
+                                      {qa.expected_questions && qa.expected_questions.length > 0 && (
+                                        <div className="bg-orange-50 border-l-4 border-orange-400 p-3 rounded-r-lg">
+                                          <div className="text-sm font-semibold text-orange-900 mb-2">❓ Expected Follow-up Questions:</div>
+                                          <ul className="space-y-1">
+                                            {qa.expected_questions.map((question, qidx) => (
+                                              <li key={qidx} className="text-sm text-orange-800">• {question}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                      
+                                      {qa.interview_tip && (
+                                        <div className="bg-indigo-50 border-l-4 border-indigo-400 p-3 rounded-r-lg">
+                                          <div className="text-sm font-semibold text-indigo-900 mb-1">💡 Interview Tip:</div>
+                                          <p className="text-indigo-800 text-sm">{qa.interview_tip}</p>
+                                        </div>
+                                      )}
+                                      
                                       {qa.follow_ups && qa.follow_ups.length > 0 && (
-                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+                                        <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3 rounded-r-lg">
                                           <div className="text-sm font-semibold text-yellow-900 mb-2">Possible Follow-ups:</div>
                                           <ul className="space-y-1">
                                             {qa.follow_ups.map((followup, fidx) => (

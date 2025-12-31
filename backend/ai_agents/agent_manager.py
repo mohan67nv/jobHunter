@@ -20,20 +20,20 @@ logger = setup_logger(__name__)
 class AgentManager:
     """Manages and orchestrates all AI agents for job analysis"""
     
-    def __init__(self, db: Session, preferred_provider: str = "perplexity"):
+    def __init__(self, db: Session, preferred_provider: str = "openai"):
         """
-        Initialize agent manager
+        Initialize AgentManager
         
         Args:
             db: Database session
-            preferred_provider: Preferred AI provider (default: perplexity)
+            preferred_provider: Preferred AI provider (default: openai using gpt-5-mini)
         """
         self.db = db
         
-        # Initialize all agents with perplexity as default
-        self.jd_analyzer = JDAnalyzer(preferred_provider)
-        self.matcher = ResumeMatcher(preferred_provider)
-        self.ats_scorer = EnhancedATSScorer()  # Has its own hardcoded provider (perplexity)
+        # Initialize all agents with gpt-5-mini as default
+        self.analyzer = JDAnalyzer(preferred_provider)
+        self.matcher = JobMatcher(preferred_provider)
+        self.ats_scorer = EnhancedATSScorer()  # Uses gpt-5-mini
         self.optimizer = ApplicationOptimizer(preferred_provider)
         self.researcher = CompanyResearcher(preferred_provider)
     

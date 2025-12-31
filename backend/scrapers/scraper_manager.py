@@ -42,11 +42,11 @@ class ScraperManager:
             # Arbeitsagentur - German Federal Employment Agency (Official API with real URLs)
             'arbeitsagentur': ArbeitsagenturScraper(),
             
-            # AI-powered scrapers (real URLs via Perplexity search)
-            'indeed': AIIndeedScraper(provider='perplexity'),
-            'stepstone': AIStepStoneScraper(provider='perplexity'),
-            'glassdoor': AIGlassdoorScraper(provider='perplexity'),
-            'monster': AIMonsterScraper(provider='perplexity'),
+            # AI-powered scrapers (using GPT-5-mini)
+            'indeed': AIIndeedScraper(provider='openai'),
+            'stepstone': AIStepStoneScraper(provider='openai'),
+            'glassdoor': AIGlassdoorScraper(provider='openai'),
+            'monster': AIMonsterScraper(provider='openai'),
             
             # Aggregators (disabled - template scrapers with fake URLs)
             # 'kimeta': KimetaScraper(),

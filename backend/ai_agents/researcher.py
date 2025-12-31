@@ -10,7 +10,7 @@ class CompanyResearcher(BaseAgent):
     """Researches companies and generates comprehensive interview prep with Q&A"""
     
     def __init__(self, preferred_provider: str = "openai"):
-        super().__init__(preferred_provider="openai")  # Use GPT-4o-mini for interview prep
+        super().__init__(preferred_provider="openai", model="gpt-5-mini")  # Use GPT-5-mini for interview prep
     
     def process(self, company_name: str, job_title: str = None, 
                 job_description: str = None, resume_text: str = None) -> Dict:
@@ -26,7 +26,7 @@ class CompanyResearcher(BaseAgent):
         Returns:
             Dictionary with company insights, technical Q&A, behavioral Q&A, and HR Q&A
         """
-        # Generate all sections using Perplexity
+        # Generate all sections using GPT-5-mini
         company_info = self._generate_company_info(company_name, job_title, job_description)
         technical_qa = self._generate_technical_qa(company_name, job_title, job_description, resume_text)
         behavioral_qa = self._generate_behavioral_qa(company_name, job_title, job_description)
@@ -127,7 +127,7 @@ Use current, real information about {company_name}. Be specific and accurate.
     
     def _generate_technical_qa(self, company_name: str, job_title: str = None, 
                                job_description: str = None, resume_text: str = None) -> List[Dict]:
-        """Generate technical Q&A based on job description, Glassdoor insights, and candidate's resume"""
+        """Generate technical Q&A based on employee interview experiences, JD requirements, and resume projects"""
         job_context = f"\nJob Title: {job_title}" if job_title else ""
         jd_context = f"\nJob Description: {job_description}" if job_description else ""
         resume_context = f"\n\nCandidate's Resume/CV:\n{resume_text[:3000]}" if resume_text else ""
@@ -137,56 +137,75 @@ Generate comprehensive technical interview questions and answers for {job_title}
 
 Company: {company_name}{job_context}{jd_context}{resume_context}
 
-IMPORTANT: Include THREE types of questions:
+Generate THREE types of questions (15-20 total):
 
-1. GLASSDOOR/REAL CANDIDATE QUESTIONS (5-7 questions)
-   - Search your knowledge for actual interview questions asked at {company_name}
-   - Include questions from Glassdoor, Blind, LeetCode Discuss for this company
-   - Mark these with "source": "glassdoor" or "source": "candidate_report"
+1. EMPLOYEE INTERVIEW EXPERIENCES (3-5 questions)
+   - Research interview experiences shared by employees at {company_name}
+   - Look for common interview patterns, frequently asked topics
+   - NOT specifically "Glassdoor" but any shared interview experiences
+   - Mark with "source": "employee_experience"
 
-2. JOB-SPECIFIC TECHNICAL QUESTIONS (5-7 questions)
-   - Based on job description requirements
-   - Role-specific technical depth
+2. JOB DESCRIPTION TECHNICAL QUESTIONS (7-10 questions)
+   - Carefully analyze the job description requirements
+   - Generate technical questions matching required skills and technologies
+   - Cover all technical areas mentioned in JD
+   - Different difficulty levels based on role seniority
+   - Mark with "source": "job_requirements"
 
-3. CANDIDATE'S PROJECT/EXPERIENCE QUESTIONS (5-7 questions) {"- ONLY if resume provided" if resume_text else ""}
-   - Questions about candidate's specific projects mentioned in resume
-   - "Tell me about your [project name]" questions
-   - Technical deep-dives into their experience
-   - How to explain their projects effectively
-   - Potential challenges interviewer might probe
+3. RESUME PROJECT QUESTIONS (5-7 questions) {"- MANDATORY if resume provided" if resume_text else "- Skip if no resume"}
+   - For EACH major project in candidate's resume:
+     * "Tell me about your [Project Name]" question
+     * Technical deep-dive questions about the project
+     * Architecture and design decision questions
+   - For EACH question provide:
+     * "how_to_explain": Step-by-step guide to explain the project impressively
+     * "what_to_emphasize": Key points that will impress interviewers
+     * "expected_questions": Follow-up questions interviewer will likely ask
+     * "impressive_metrics": Specific numbers/results to highlight
+   - Mark with "source": "resume_project"
 
-Return ONLY valid JSON array with 15-20 questions total:
+Return ONLY valid JSON array:
 [
     {{
-        "question": "Specific technical question",
-        "answer": "Comprehensive answer with examples, code snippets if relevant, best practices. 4-6 sentences minimum.",
+        "question": "Technical question",
+        "answer": "Comprehensive answer with technical depth, best practices, examples. 5-7 sentences.",
         "difficulty": "Easy|Medium|Hard",
-        "category": "System Design|Algorithms|ML|Cloud|Database|Project-Experience|Company-Specific",
-        "source": "glassdoor|job_description|candidate_project",
-        "key_points": ["Key point 1", "Key point 2", "Key point 3"],
-        "follow_ups": ["Potential follow-up question 1", "Potential follow-up question 2"],
-        "project_context": "Name of candidate's project (if source is candidate_project)",
-        "explanation_approach": "How to explain this effectively (for project questions)"
+        "category": "System Design|Algorithms|ML|Cloud|Database|Project-Deep-Dive|Architecture",
+        "source": "employee_experience|job_requirements|resume_project",
+        "project_name": "Project name from resume (if source is resume_project)",
+        "how_to_explain": "Step-by-step approach to explain this impressively",
+        "what_to_emphasize": ["Point 1 to emphasize", "Point 2", "Point 3"],
+        "expected_questions": ["Follow-up question 1", "Follow-up question 2"],
+        "impressive_metrics": ["Metric 1 with numbers", "Metric 2"],
+        "key_points": ["Technical point 1", "Point 2", "Point 3"],
+        "interview_tip": "Specific tip for answering this effectively"
     }}
 ]
 
-For GLASSDOOR questions:
-- Include actual questions reported by candidates
-- Mention company-specific interview patterns
-- Include coding questions if they use specific platforms (LeetCode, HackerRank)
+For EMPLOYEE EXPERIENCE questions:
+- Focus on commonly reported interview topics at this company
+- Include technical areas employees mention
+- Note any company-specific interview style
 
-For PROJECT questions (if resume provided):
-- Reference specific project names from resume
-- Ask about technical decisions made
-- Probe architecture and scalability
-- Ask about challenges faced
-- Provide guidance on best way to explain the project
-- Suggest metrics/results to highlight
+For JOB REQUIREMENTS questions:
+- MUST align with skills/technologies in job description
+- Cover all major technical requirements
+- Match complexity to role level (junior/mid/senior)
+- Include practical scenario-based questions
 
-Make all answers detailed, practical, and demonstrate expertise.
+For RESUME PROJECT questions (CRITICAL):
+- Extract specific project names from resume
+- For each project, provide:
+  1. Opening question: "Tell me about your [Project Name]"
+  2. how_to_explain: "Start with business problem (e.g., 'reduced costs by 40%'), then explain your role and key technical decisions (e.g., 'I designed the architecture using...'), highlight challenges overcome, end with measurable impact"
+  3. what_to_emphasize: ["Your specific contributions", "Technical decisions you made", "Quantifiable results", "Technologies you chose and why"]
+  4. expected_questions: ["What challenges did you face?", "Why did you choose X over Y?", "How did you handle scalability?", "What would you do differently?"]
+  5. impressive_metrics: ["Reduced processing time by 40%", "Handled 10K requests/sec", "Saved $200K annually"]
+  
+Make ALL answers detailed, practical, and demonstrate expertise. Focus on helping candidate explain their work impressively.
 """
         
-        response = self.generate(prompt, temperature=0.5, max_tokens=6000)
+        response = self.generate(prompt, temperature=0.6, max_tokens=8000)
         parsed = self.parse_json_response(response)
         
         if not parsed or not isinstance(parsed, list):

@@ -15,7 +15,7 @@ class EnhancedATSScorer(BaseAgent):
     """Industry-standard ATS scoring with 30+ comprehensive checks (Jobscan-level)"""
     
     def __init__(self):
-        super().__init__(preferred_provider="perplexity")  # Using Perplexity sonar model
+        super().__init__(preferred_provider="openai", model="gpt-5-mini")  # Using GPT-5-mini
         self.logger = logger
     
     def process(self, resume_text: str, job_description: str) -> Dict:

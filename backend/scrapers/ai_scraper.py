@@ -1,5 +1,5 @@
 """
-AI-Powered Job Scraper - Uses Perplexity AI to search and extract job listings
+AI-Powered Job Scraper - Uses GPT-5-mini to search and extract job listings
 Bypasses anti-scraping by using AI to search the web and extract structured job data
 """
 from typing import List, Dict, Optional
@@ -18,14 +18,14 @@ except ImportError:
 
 
 class AIJobScraper(BaseScraper):
-    """AI-powered scraper using Perplexity/GPT to extract job listings"""
+    """AI-powered scraper using GPT-5-mini to extract job listings"""
     
-    def __init__(self, provider: str = 'perplexity'):
+    def __init__(self, provider: str = 'openai'):
         """
-        Initialize AI scraper
+        Initialize scraper
         
         Args:
-            provider: 'perplexity' or 'openai'
+            provider: 'openai' (using gpt-5-mini)
         """
         super().__init__()
         self.provider = provider
@@ -34,24 +34,13 @@ class AIJobScraper(BaseScraper):
             self.logger.error("❌ OpenAI library not installed")
             return
         
-        # Initialize AI client
-        if provider == 'perplexity':
-            api_key = os.getenv('PERPLEXITY_API_KEY')
-            if not api_key:
-                self.logger.error("❌ PERPLEXITY_API_KEY not set")
-                return
-            self.client = OpenAI(
-                api_key=api_key,
-                base_url="https://api.perplexity.ai"
-            )
-            self.model = "sonar"
-        else:  # openai
-            api_key = os.getenv('OPENAI_API_KEY')
-            if not api_key:
-                self.logger.error("❌ OPENAI_API_KEY not set")
-                return
-            self.client = OpenAI(api_key=api_key)
-            self.model = "gpt-4o-mini"
+        # Initialize AI client with GPT-5-mini
+        api_key = os.getenv('OPENAI_API_KEY')
+        if not api_key:
+            self.logger.error("❌ OPENAI_API_KEY not set")
+            return
+        self.client = OpenAI(api_key=api_key)
+        self.model = "gpt-5-mini"
         
         self.logger.info(f"✅ AI Scraper initialized with {provider}")
     
