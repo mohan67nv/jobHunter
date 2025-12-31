@@ -259,23 +259,35 @@ Return ONLY the JSON array, no other text."""
 # Specific site scrapers using AI
 class AIIndeedScraper(AIJobScraper):
     """AI-powered Indeed scraper"""
+    def __init__(self, provider: str = 'deepseek', model: str = None):
+        super().__init__(provider)
+    
     def scrape(self, keyword: str, location: str = "Germany", **kwargs) -> List[Dict]:
         return super().scrape(keyword, location, site="indeed.de", max_results=20)
 
 
 class AIStepStoneScraper(AIJobScraper):
     """AI-powered StepStone scraper"""
+    def __init__(self, provider: str = 'deepseek', model: str = None):
+        super().__init__(provider)
+    
     def scrape(self, keyword: str, location: str = "Germany", **kwargs) -> List[Dict]:
         return super().scrape(keyword, location, site="stepstone.de", max_results=20)
 
 
 class AIGlassdoorScraper(AIJobScraper):
     """AI-powered Glassdoor scraper"""
+    def __init__(self, provider: str = 'deepseek', model: str = None):
+        super().__init__(provider)
+    
     def scrape(self, keyword: str, location: str = "Germany", **kwargs) -> List[Dict]:
         return super().scrape(keyword, location, site="glassdoor.com", max_results=20)
 
 
 class AIMonsterScraper(AIJobScraper):
     """AI-powered Monster scraper"""
+    def __init__(self, provider: str = 'deepseek', model: str = None):
+        super().__init__(provider)
+    
     def scrape(self, keyword: str, location: str = "Germany", **kwargs) -> List[Dict]:
         return super().scrape(keyword, location, site="monster.de", max_results=20)

@@ -1,6 +1,11 @@
 """
 Centralized AI Model Configuration
 Maps each agent to its optimal model based on task requirements and cost efficiency
+
+DeepSeek Models Strategy:
+- deepseek-coder: Code/parsing, structured data extraction (JD parsing, resume optimization)
+- deepseek-chat (V3): Analysis, matching, scoring (ATS, matching, web scraping)
+- deepseek-reasoner (R1): Complex reasoning, interview prep, behavioral analysis
 """
 
 # Model routing configuration
@@ -39,16 +44,23 @@ MODEL_ROUTING = {
         "model": "deepseek-chat"
     },
     
-    # Company Research - GPT-5-mini
-    # Knowledge-heavy task, benefits from OpenAI's training
+    # Company Research - DeepSeek Reasoner (R1)
+    # Complex reasoning for interview prep, behavioral Q&A analysis
     "CompanyResearcher": {
-        "provider": "openai",
-        "model": "gpt-5-mini"
+        "provider": "deepseek",
+        "model": "deepseek-reasoner"
     },
     
-    # Web Scraping - DeepSeek V3 (Chat)
-    # Pattern recognition and content extraction
+    # Web Scraping - DeepSeek Reasoner (R1)
+    # Complex pattern recognition, intelligent content extraction from job sites
     "AIJobScraper": {
+        "provider": "deepseek",
+        "model": "deepseek-reasoner"
+    },
+    
+    # Scraper Manager - DeepSeek Chat (V3)
+    # General scraping coordination and data processing
+    "ScraperManager": {
         "provider": "deepseek",
         "model": "deepseek-chat"
     }

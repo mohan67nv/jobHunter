@@ -15,6 +15,7 @@ from scrapers.aggregators import KimetaScraper, JobliftScraper, JoobleScraper
 from scrapers.company_scraper import CompanyScraper
 from scrapers.german_job_boards import StepStoneScraper, XINGJobsScraper, MonsterDeScraper, FinestJobsScraper
 from scrapers.ai_scraper import AIIndeedScraper, AIStepStoneScraper, AIGlassdoorScraper, AIMonsterScraper
+from ai_agents.model_config import get_model_config
 from utils.deduplicator import Deduplicator
 from utils.logger import setup_logger
 
@@ -34,6 +35,9 @@ class ScraperManager:
         self.db = db
         self.deduplicator = Deduplicator(db)
         
+        # Get model config for scrapers
+        scraper_config = get_model_config('AIJobScraper')
+        
         # Initialize ONLY scrapers with real, valid URLs
         self.scrapers = {
             # JobSpy - LinkedIn (real job URLs)
@@ -42,11 +46,11 @@ class ScraperManager:
             # Arbeitsagentur - German Federal Employment Agency (Official API with real URLs)
             'arbeitsagentur': ArbeitsagenturScraper(),
             
-            # AI-powered scrapers (using GPT-5-mini)
-            'indeed': AIIndeedScraper(provider='openai'),
-            'stepstone': AIStepStoneScraper(provider='openai'),
-            'glassdoor': AIGlassdoorScraper(provider='openai'),
-            'monster': AIMonsterScraper(provider='openai'),
+            # AI-powered scrapers (using DeepSeek Reasoner for intelligent scraping)
+            'indeed': AIIndeedScraper(provider=scraper_config['provider'], model=scraper_config['model']),
+            'stepstone': AIStepStoneScraper(provider=scraper_config['provider'], model=scraper_config['model']),
+            'glassdoor': AIGlassdoorScraper(provider=scraper_config['provider'], model=scraper_config['model']),
+            'monster': AIMonsterScraper(provider=scraper_config['provider'], model=scraper_config['model']),
             
             # Aggregators (disabled - template scrapers with fake URLs)
             # 'kimeta': KimetaScraper(),
