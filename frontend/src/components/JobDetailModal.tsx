@@ -20,6 +20,32 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null)
 
+  // Mutation for marking as applied - MUST be called before any conditional returns
+  const markAsAppliedMutation = useMutation({
+    mutationFn: async (status: string) => {
+      const response = await applicationsApi.create({
+        job_id: job.id,
+        status: status,
+        applied_date: status === 'applied' ? new Date().toISOString() : null,
+      })
+      return response.data
+    },
+    onSuccess: (data) => {
+      setApplicationStatus(data.status)
+      queryClient.invalidateQueries({ queryKey: ['applications'] })
+      queryClient.invalidateQueries({ queryKey: ['application-stats'] })
+    },
+    onError: (error: any) => {
+      console.error('Failed to mark as applied:', error)
+      if (error.response?.status === 400) {
+        alert('Application already exists for this job')
+      } else {
+        alert('Failed to save application. Please try again.')
+      }
+    }
+  })
+
+  // Early return AFTER all hooks are defined
   if (!isOpen) return null
 
   const handleAnalyze = () => {
@@ -52,31 +78,6 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
       }
     )
   }
-
-  // Mutation for marking as applied
-  const markAsAppliedMutation = useMutation({
-    mutationFn: async (status: string) => {
-      const response = await applicationsApi.create({
-        job_id: job.id,
-        status: status,
-        applied_date: status === 'applied' ? new Date().toISOString() : null,
-      })
-      return response.data
-    },
-    onSuccess: (data) => {
-      setApplicationStatus(data.status)
-      queryClient.invalidateQueries({ queryKey: ['applications'] })
-      queryClient.invalidateQueries({ queryKey: ['application-stats'] })
-    },
-    onError: (error: any) => {
-      console.error('Failed to mark as applied:', error)
-      if (error.response?.status === 400) {
-        alert('Application already exists for this job')
-      } else {
-        alert('Failed to save application. Please try again.')
-      }
-    }
-  })
 
   const handleMarkAsApplied = (status: string) => {
     markAsAppliedMutation.mutate(status)
