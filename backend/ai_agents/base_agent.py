@@ -248,13 +248,13 @@ class BaseAgent(ABC):
     
     def parse_json_response(self, response: str) -> Optional[Dict]:
         """
-        Parse JSON from AI response
+        Parse JSON from AI response with error recovery
         
         Args:
             response: AI-generated text
             
         Returns:
-            Parsed JSON dict or None if parsing fails
+            Parsed JSON dict or empty dict if parsing fails
         """
         try:
             # Try to find JSON in response (sometimes wrapped in markdown)
@@ -266,10 +266,11 @@ class BaseAgent(ABC):
                 json_str = response.strip()
             
             return json.loads(json_str)
-        except Exception as e:
+        except json.JSONDecodeError as e:
             logger.error(f"Error parsing JSON response: {e}")
-            logger.debug(f"Response was: {response[:500]}")
-            return None
+            logger.warning(f"Malformed JSON - continuing with default values")
+            # Return empty dict to allow processing to continue
+            return {}
     
     @abstractmethod
     def process(self, *args, **kwargs) -> Dict:
