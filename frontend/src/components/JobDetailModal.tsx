@@ -14,23 +14,35 @@ interface JobDetailModalProps {
 export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDetailModalProps) {
   const analyzeJobMutation = useAnalyzeJob()
   const [showSuccessMessage, setShowSuccessMessage] = useState(false)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
 
   if (!isOpen) return null
 
   const handleAnalyze = () => {
-    // Show immediate feedback
+    // Prevent double-clicks
+    if (isAnalyzing || analyzeJobMutation.isPending) {
+      console.log('⏳ Analysis already in progress, please wait...')
+      return
+    }
+
+    console.log('🚀 Starting AI Analysis for job:', job.id)
+    setIsAnalyzing(true)
     setShowSuccessMessage(true)
     
     analyzeJobMutation.mutate(
       { jobId: job.id, generateMaterials: true },
       {
         onSuccess: () => {
-          console.log('✅ Analysis started successfully')
-          setTimeout(() => setShowSuccessMessage(false), 60000) // Hide after 60s
+          console.log('✅ Analysis API call successful')
+          // Keep analyzing state true until results appear
+          setTimeout(() => {
+            setIsAnalyzing(false)
+          }, 45000) // Reset after 45 seconds
         },
         onError: (error) => {
           console.error('❌ Analysis failed:', error)
           setShowSuccessMessage(false)
+          setIsAnalyzing(false)
           alert('Failed to start analysis. Please try again.')
         }
       }
@@ -419,11 +431,13 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
                           )}
                           <button
                             onClick={handleAnalyze}
-                            disabled={analyzeJobMutation.isPending}
-                            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 flex items-center justify-center space-x-2"
+                            disabled={isAnalyzing || analyzeJobMutation.isPending}
+                            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
                           >
                             <TrendingUp className="h-5 w-5" />
-                            <span className="font-semibold">Run Full AI Analysis</span>
+                            <span className="font-semibold">
+                              {isAnalyzing ? 'Starting Analysis...' : 'Run Full AI Analysis'}
+                            </span>
                           </button>
                           <p className="text-xs text-gray-500 mt-2 text-center">
                             🤖 5 AI Agents • 42-Point ATS • Tailored Materials • 30-45s
