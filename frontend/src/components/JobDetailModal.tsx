@@ -18,12 +18,20 @@ export default function JobDetailModal({ job, analysis, isOpen, onClose }: JobDe
   if (!isOpen) return null
 
   const handleAnalyze = () => {
+    // Show immediate feedback
+    setShowSuccessMessage(true)
+    
     analyzeJobMutation.mutate(
       { jobId: job.id, generateMaterials: true },
       {
         onSuccess: () => {
-          setShowSuccessMessage(true)
+          console.log('✅ Analysis started successfully')
           setTimeout(() => setShowSuccessMessage(false), 60000) // Hide after 60s
+        },
+        onError: (error) => {
+          console.error('❌ Analysis failed:', error)
+          setShowSuccessMessage(false)
+          alert('Failed to start analysis. Please try again.')
         }
       }
     )

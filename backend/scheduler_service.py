@@ -137,14 +137,17 @@ def run_scheduler():
     logger.info("🕐 Job Hunter Scheduler Service Started")
     logger.info("=" * 80)
     logger.info("Schedule:")
-    logger.info("  - Job scraping: 8:00 AM and 6:00 PM daily")
+    logger.info("  - Job scraping: 5 times daily (7 AM, 11 AM, 2 PM, 5 PM, 8 PM)")
     logger.info("  - Match score calculation: Every 5 minutes (for any missed jobs)")
     logger.info("  - Note: New jobs get scored immediately during scraping")
     logger.info("=" * 80)
     
-    # Schedule daily scraping (twice per day)
-    schedule.every().day.at("08:00").do(run_daily_scraping)
-    schedule.every().day.at("18:00").do(run_daily_scraping)
+    # Schedule daily scraping (5 times per day for maximum job coverage)
+    schedule.every().day.at("07:00").do(run_daily_scraping)  # Morning
+    schedule.every().day.at("11:00").do(run_daily_scraping)  # Late morning
+    schedule.every().day.at("14:00").do(run_daily_scraping)  # Afternoon
+    schedule.every().day.at("17:00").do(run_daily_scraping)  # Evening
+    schedule.every().day.at("20:00").do(run_daily_scraping)  # Night
     
     # Schedule match score calculation every 5 minutes (for any missed jobs)
     # Note: Most jobs are scored immediately during scraping
