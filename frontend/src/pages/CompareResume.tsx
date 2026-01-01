@@ -8,6 +8,7 @@ export default function CompareResume() {
   const [jdText, setJdText] = useState('')
   const [analysis, setAnalysis] = useState<any>(null)
   const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [fileInputKey, setFileInputKey] = useState(0) // Key to reset file input
 
   // PDF upload mutation
   const uploadPdfMutation = useMutation({
@@ -83,6 +84,8 @@ export default function CompareResume() {
 
   const handleClearResume = () => {
     setResumeText('')
+    setPdfFile(null) // Clear PDF file state
+    setFileInputKey(prev => prev + 1) // Reset file input by changing key
   }
 
   const handleClearJD = () => {
@@ -138,6 +141,7 @@ export default function CompareResume() {
                 <Upload className="h-4 w-4" />
                 {uploadPdfMutation.isPending ? 'Parsing...' : 'Upload PDF'}
                 <input 
+                  key={fileInputKey} // Reset input when key changes
                   type="file" 
                   accept="application/pdf" 
                   onChange={handlePdfUpload}
