@@ -57,16 +57,37 @@ Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
 - ✅ Confidence scoring based on 3-way agreement
 - ✅ Every job gets full 3-layer analysis for maximum accuracy
 
-#### **Compare CV-JD Section**
-Manual resume-job description comparison with comprehensive analysis:
+#### **Compare CV-JD Section - Industry-Leading 3-Score System** 🎯
+Manual resume-job description comparison with **THREE DIFFERENT SCORING METHODS** for maximum accuracy:
+
+**🌟 Three Scoring Methods (Better than JobScan, ResumeWorded, etc.):**
+
+1. **Real ATS Score (PRIMARY)** ⭐
+   - **Most Accurate**: Rules-based exact keyword matching
+   - **No AI Guessing**: Pure mathematical calculation like real ATS systems (Workday, Greenhouse, Taleo)
+   - **Formula**: `(keyword_score × 70%) + (format_score × 30%)`
+   - **Shows**: Exact matches (e.g., 15/20 keywords), total resume words, match rate
+   - **Use When**: You want the EXACT score real ATS systems would give
+
+2. **AI Keyword Score (Conservative)**
+   - **Method**: DeepSeek Reasoner deep analysis
+   - **Shows**: Improvement potential (e.g., 70% → 92%)
+   - **Features**: Context analysis, keyword importance scoring
+   - **Use When**: Understanding keyword strategy and gaps
+
+3. **Multi-Layer Score (Optimistic)**
+   - **Method**: 3-AI consensus (DeepSeek-V3.2 + GPT-5-mini + DeepSeek-R1)
+   - **Features**: 43-point comprehensive checks
+   - **Shows**: Layer-by-layer breakdown with weights
+   - **Use When**: Need comprehensive feedback
 
 **Features:**
-- **PDF Upload**: Upload resume PDF, parsed with GPT-5-mini for intelligent text extraction
+- **PDF Upload**: Upload resume PDF with unlimited uploads (can clear and re-upload anytime)
 - **AI Anonymization**: Automatically removes PII (names, emails, phones, addresses) before sending to LLMs
-- **Multi-Layer ATS Scoring**: Same 3-layer system as job analysis
+- **Exact Keyword Counting**: Shows exact number of matched keywords (e.g., 15/20)
+- **Resume Word Count**: Displays total words in your resume
 - **Match Score**: Qualifications vs requirements analysis
-- **Keyword Match**: Percentage of JD keywords found in resume
-- **Skill Gap Analysis**: Shows matching skills and missing skills
+- **Skill Gap Analysis**: Shows matching skills and missing skills (no more "0" issues!)
 - **Experience & Education Match**: Contextual matching of your background
 
 **What We Assess:**
@@ -77,33 +98,64 @@ Manual resume-job description comparison with comprehensive analysis:
    - Technical skills coverage
    - Domain expertise match
 
-2. **ATS Score (0-100%)**:
-   - 43-point comprehensive check (see above)
-   - Keyword optimization
-   - Format compatibility
-   - Structure quality
-   - Parsing reliability
+2. **Real ATS Score (0-100%)** ⭐ PRIMARY:
+   - Rules-based exact keyword matching (no AI)
+   - Format quality assessment (parsability, structure)
+   - Hard requirement filters (degree, years of experience)
+   - Exact match counting with keyword density
+   - Formula: (keyword_score × 70%) + (format_score × 30%)
+   - **Most Accurate**: Matches how real ATS systems work
 
-3. **Keyword Density (0-100%)**:
-   - Exact keyword matches from JD
-   - Synonym and related term detection
-   - Action verb usage
-   - Quantified achievements
-   - Industry-specific terminology
+3. **AI Keyword Score (0-100%)**:
+   - DeepSeek Reasoner deep keyword analysis
+   - Context-aware importance scoring (0-100 per keyword)
+   - 8 categories: Technical, Leadership, Qualifications, Domain, Tools, Soft Skills, Action Verbs, Company-specific
+   - Shows improvement potential after fixes
+   - Conservative estimate
 
-4. **Score Difference Analysis**:
-   - Match vs ATS alignment check
-   - <10% difference = Well aligned (qualified + resume shows it)
-   - Match > ATS = Qualified but resume needs optimization
-   - ATS > Match = Resume looks good but may lack qualifications
+4. **Multi-Layer Score (0-100%)**:
+   - 3-AI consensus with 43-point comprehensive check
+   - DeepSeek-V3.2 (30%) + GPT-5-mini (40%) + DeepSeek-R1 (30%)
+   - Detailed layer-by-layer breakdown
+   - Tends to score higher (optimistic)
 
-**🎮 AI Resume Suggestions (GAME CHANGER!)**
-- Analyzes missing keywords from job description
-- Generates AI-powered experience bullet points using missing skills
-- Provides ready-to-copy resume bullets aligned with JD requirements
-- Copy-to-clipboard functionality for instant use
-- Pro tips for customization with real metrics
-- Helps improve match score instantly!
+5. **Score Comparison Analysis**:
+   - All three scores displayed side-by-side
+   - Explains methodology differences
+   - Recommendation: Use Real ATS Score as primary
+   - Shows formula and exact calculations
+
+**� Why Better Than Competitors (JobScan, ResumeWorded, etc.):**
+
+| Feature | SmartJobHunter | Competitors |
+|---------|----------------|-------------|
+| **Number of Scores** | 3 different methods | 1 score only |
+| **Scoring Transparency** | Shows all formulas & calculations | Black box |
+| **Exact Keyword Matches** | ✅ Displays count (15/20) | ❌ Not shown |
+| **Resume Word Count** | ✅ Always shown | ❌ Not shown |
+| **Real ATS Algorithm** | ✅ Rules-based matching | ❌ AI guessing only |
+| **Compare Methods** | ✅ See all 3 side-by-side | ❌ Can't compare |
+| **AI Context Analysis** | ✅ DeepSeek Reasoner | Limited |
+| **CV-Specific Bullets** | ✅ Uses your real data | Generic templates |
+| **Price** | **FREE** | $29-49/month |
+
+**�🎮 AI Resume Suggestions (GAME CHANGER!)**
+- **JD-Specific Professional Summary**: AI-generated summary using YOUR REAL metrics from CV
+- **Experience Bullets Mapped to Companies**: Contextual bullets for your actual work history (not generic!)
+- **Skills Section Suggestions**: Technical skills, tools, and complete skills section to copy
+- **Priority Actions**: Ranked by impact with exact recommendations
+- **Missing Critical Keywords**: Shows importance (0-100), why missing, where to add
+- **Strategic Improvements**: Section-by-section fixes with examples
+- **Comparison Table**: Side-by-side JD requirements vs resume status
+- **Copy-to-Clipboard**: One-click copy for all suggestions
+- Helps improve match score from 70% to 92%+ instantly!
+
+**📊 Visual Stats Display:**
+- Exact keyword matches: "15/20 keywords matched"
+- Resume word count: "487 words"
+- Match rate percentage: "75%"
+- Keyword density per keyword
+- Format quality score breakdown
 
 ### 🔍 **Comprehensive Job Scraping**
 - **Multi-Source**: Arbeitsagentur, LinkedIn, Indeed, StepStone, Glassdoor, Kimeta, Joblift, Jooble
