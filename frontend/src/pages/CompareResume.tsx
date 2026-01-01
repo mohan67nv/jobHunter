@@ -194,10 +194,10 @@ export default function CompareResume() {
         <div className="text-center mb-8">
           <button
             onClick={handleAnalyze}
-            disabled={compareMutation.isPending || !cvText.trim() || !jdText.trim()}
+            disabled={analyzeMutation.isPending || !resumeText.trim() || !jdText.trim()}
             className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center mx-auto gap-3"
           >
-            {compareMutation.isPending ? (
+            {analyzeMutation.isPending ? (
               <>
                 <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
                 Analyzing with AI...
@@ -209,7 +209,7 @@ export default function CompareResume() {
               </>
             )}
           </button>
-          {(!cvText.trim() || !jdText.trim()) && (
+          {(!resumeText.trim() || !jdText.trim()) && (
             <p className="mt-3 text-sm text-gray-500">Enter both resume and job description to analyze</p>
           )}
         </div>
