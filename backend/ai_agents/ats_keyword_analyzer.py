@@ -21,6 +21,36 @@ class ATSKeywordAnalyzer(BaseAgent):
         super().__init__(preferred_provider="deepseek", model="deepseek-reasoner")
         logger.info("✅ ATSKeywordAnalyzer initialized with DeepSeek Reasoner")
     
+    def process(self, resume_text: str, job_description: str) -> Dict:
+        """
+        Main processing method required by BaseAgent
+        Performs complete keyword analysis and gap detection
+        
+        Args:
+            resume_text: Full resume text
+            job_description: Job description text
+            
+        Returns:
+            Complete analysis with keywords, gaps, and recommendations
+        """
+        # Extract keywords from JD
+        jd_keywords = self.analyze_jd_keywords(job_description)
+        
+        # Analyze gaps in resume
+        gap_analysis = self.analyze_cv_gaps(resume_text, jd_keywords)
+        
+        # Generate comparison table
+        comparison_table = self.generate_comparison_table(jd_keywords, gap_analysis)
+        
+        return {
+            "categorized_keywords": jd_keywords,
+            "gap_analysis": gap_analysis,
+            "comparison_table": comparison_table,
+            "current_ats_score": gap_analysis.get("current_ats_score", 0),
+            "estimated_score_after_fixes": gap_analysis.get("estimated_score_after_fixes", 0),
+            "score_improvement_potential": gap_analysis.get("estimated_score_after_fixes", 0) - gap_analysis.get("current_ats_score", 0)
+        }
+    
     def analyze_jd_keywords(self, job_description: str) -> Dict:
         """
         Deep analysis of job description to extract ALL ATS-critical keywords
