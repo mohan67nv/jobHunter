@@ -276,21 +276,42 @@ def compare_custom_cv_jd(
     db: Session = Depends(get_db)
 ):
     """
-    Compare custom CV text with job description using Multi-Layer ATS Scoring
+    🎯 COMPREHENSIVE ATS Keyword Analysis - Industry-Leading CV-JD Comparison
     
     - **resume_text**: Your resume/CV text
     - **job_description**: Job description to compare against
     
-    Uses 3-layer ATS scoring:
-    - Layer 1: DeepSeek-V3.2 (30%) - Fast baseline
-    - Layer 2: GPT-5-mini (40%) - Validation (highest weight)
-    - Layer 3: DeepSeek-R1 (30%) - Deep reasoning
+    🔥 What makes this better than competitors:
     
-    Returns match analysis with multi-layer score, matching skills, gaps, and recommendations
+    1. **Deep JD Analysis with DeepSeek Reasoner**:
+       - Extracts ALL ATS-critical keywords (technical, leadership, soft skills)
+       - Categorizes by importance (0-100 score)
+       - Identifies implicit requirements (e.g., "oversee" = needs leadership keywords)
+       - Finds reference numbers, company-specific terms
+    
+    2. **3-Layer ATS Scoring**:
+       - Layer 1: DeepSeek-V3.2 (30%) - Fast baseline
+       - Layer 2: GPT-5-mini (40%) - Validation (highest weight)
+       - Layer 3: DeepSeek-R1 (30%) - Deep reasoning
+    
+    3. **Strategic Gap Analysis**:
+       - Missing critical keywords with exact recommendations
+       - Under-emphasized keywords (found but not enough)
+       - Section-by-section improvement guide
+       - Estimated ATS score after fixes
+    
+    4. **Visual Comparison Table**:
+       - Side-by-side JD requirements vs Resume status
+       - Priority actions ranked by impact
+       - Exact text replacements suggested
+    
+    Returns comprehensive analysis matching top industry tools (JobScan level)
     """
     try:
         from ai_agents.jd_analyzer import JDAnalyzer
         from ai_agents.matcher import ResumeMatcher
+        from ai_agents.ats_keyword_analyzer import ATSKeywordAnalyzer
+        import time
         
         if not request.resume_text or not request.resume_text.strip():
             raise HTTPException(status_code=400, detail="Resume text is required")
@@ -298,33 +319,59 @@ def compare_custom_cv_jd(
         if not request.job_description or not request.job_description.strip():
             raise HTTPException(status_code=400, detail="Job description is required")
         
-        logger.info("🔍 Analyzing custom CV-JD comparison with Multi-Layer ATS...")
+        start_time = time.time()
+        logger.info("🔍 Starting COMPREHENSIVE ATS Keyword Analysis with DeepSeek Reasoner...")
         
-        # Step 1: Analyze job description
+        # Step 1: Deep JD keyword extraction with DeepSeek Reasoner
+        logger.info("📊 Step 1/5: Deep JD analysis with DeepSeek Reasoner...")
+        keyword_analyzer = ATSKeywordAnalyzer()
+        jd_keywords = keyword_analyzer.analyze_jd_keywords(request.job_description)
+        
+        # Step 2: Analyze job description (for skills/requirements)
+        logger.info("📋 Step 2/5: Analyzing job requirements...")
         jd_analyzer = JDAnalyzer()
         jd_analysis = jd_analyzer.process(request.job_description)
         
-        # Step 2: Match resume to job
+        # Step 3: Match resume to job (for compatibility score)
+        logger.info("🎯 Step 3/5: Calculating resume-job match score...")
         matcher = ResumeMatcher()
         match_result = matcher.process(request.resume_text, request.job_description, jd_analysis)
         
-        # Step 3: Anonymize resume before sending to LLMs (security)
+        # Step 4: Anonymize resume before sending to LLMs (security)
+        logger.info("🔒 Step 4/5: Anonymizing resume (removing PII)...")
         from utils.anonymizer import get_anonymizer
         anonymizer = get_anonymizer()
         anon_result = anonymizer.anonymize(request.resume_text)
         anonymized_resume = anon_result['anonymized_text']
-        logger.info(f"🔒 Anonymized resume: {len(anon_result['removed_pii'])} PII items removed")
+        logger.info(f"   ✅ Removed {len(anon_result['removed_pii'])} PII items for security")
         
-        # Step 4: Multi-Layer ATS Scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+        # Step 5: Multi-Layer ATS Scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+        logger.info("🏆 Step 5/5: Running 3-layer ATS scoring...")
         multi_layer_scorer = MultiLayerATSScorer()
         ats_result = multi_layer_scorer.assess_resume(anonymized_resume, request.job_description)
         
-        logger.info(f"✅ Custom comparison complete: Match {match_result['match_score']}%, Multi-Layer ATS {ats_result.get('final_score', 0)}%")
-        logger.info(f"   Layer breakdown: L1={ats_result.get('layer1_score', 0)}%, L2={ats_result.get('layer2_score', 0)}%, L3={ats_result.get('layer3_score', 0)}%")
+        # Step 6: Strategic gap analysis with recommendations
+        logger.info("💡 Analyzing keyword gaps and generating recommendations...")
+        gap_analysis = keyword_analyzer.analyze_cv_gaps(request.resume_text, jd_keywords)
+        
+        # Step 7: Generate visual comparison table
+        logger.info("📊 Building visual comparison table...")
+        comparison_table = keyword_analyzer.generate_comparison_table(jd_keywords, gap_analysis)
+        
+        elapsed = time.time() - start_time
+        
+        logger.info(f"✅ COMPREHENSIVE ANALYSIS COMPLETE in {elapsed:.1f}s")
+        logger.info(f"   Match: {match_result['match_score']}% | ATS: {ats_result.get('final_score', 0)}%")
+        logger.info(f"   Current ATS: {gap_analysis.get('current_ats_score', 0)}% → After fixes: {gap_analysis.get('estimated_score_after_fixes', 0)}%")
+        logger.info(f"   Missing critical: {len(gap_analysis.get('missing_critical', []))} | Strategic improvements: {len(gap_analysis.get('strategic_improvements', []))}")
         
         return {
+            # Basic scores
             "match_score": match_result['match_score'],
             "ats_score": ats_result.get('final_score', 0),
+            "keyword_density": ats_result.get('keyword_analysis', {}).get('keyword_match_rate', 0),
+            
+            # Multi-layer breakdown
             "multi_layer_breakdown": {
                 "layer1_baseline": ats_result.get('layer1_score', 0),
                 "layer1_weight": "30%",
@@ -333,7 +380,18 @@ def compare_custom_cv_jd(
                 "layer3_reasoning": ats_result.get('layer3_score', 0),
                 "layer3_weight": "30%"
             },
-            "keyword_density": ats_result.get('keyword_analysis', {}).get('keyword_match_rate', 0),
+            
+            # Keyword analysis (COMPREHENSIVE)
+            "keyword_analysis": {
+                "categorized_keywords": jd_keywords,
+                "gap_analysis": gap_analysis,
+                "comparison_table": comparison_table,
+                "current_ats_score": gap_analysis.get('current_ats_score', 0),
+                "estimated_score_after_fixes": gap_analysis.get('estimated_score_after_fixes', 0),
+                "score_improvement_potential": gap_analysis.get('estimated_score_after_fixes', 0) - gap_analysis.get('current_ats_score', 0)
+            },
+            
+            # Legacy match data
             "matching_skills": match_result['matching_skills'],
             "missing_skills": match_result['missing_skills'],
             "experience_match": match_result['experience_match'],
@@ -341,7 +399,11 @@ def compare_custom_cv_jd(
             "strengths": match_result['strengths'],
             "concerns": match_result['concerns'],
             "overall_assessment": match_result['overall_assessment'],
+            
+            # Recommendations
             "recommendations": ats_result.get('recommendations', []),
+            
+            # ATS details
             "ats_details": {
                 "keyword_analysis": ats_result.get('keyword_analysis', {}),
                 "font_check": ats_result.get('font_check', {}),

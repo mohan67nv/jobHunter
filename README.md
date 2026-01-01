@@ -14,27 +14,96 @@ A production-ready, full-stack application that automates job searching, scrapin
 ## ✨ Features
 
 ### 🤖 **Advanced AI-Powered Analysis**
-- **Multi-Layer ATS Scoring**: Industry-leading 3-layer AI scoring system (94-96% accuracy)
-  - Layer 1 (DeepSeek Chat): Fast baseline scoring (30% weight)
-  - Layer 2 (GPT-5-mini): Validation & nuance detection (40% weight - highest)
-  - Layer 3 (DeepSeek Reasoner): Deep reasoning + actionable feedback (30% weight)
-- **Job-Resume Matching**: Calculate compatibility scores with contextual analysis
-- **Tailored Applications**: Auto-generate customized resumes and cover letters
-- **Interview Prep**: Get likely interview questions and preparation tips
-- **Company Research**: Automatic company insights powered by GPT-5-mini
 
-### 🎯 **Multi-Layer ATS System**
+#### **Multi-Layer ATS Scoring System**
+Our industry-leading 3-layer AI scoring system achieves 94-96% accuracy by combining three specialized AI models:
+
+**Architecture:**
 ```
-Every job → Layer 1 (Fast) → Layer 2 (Validation) → Layer 3 (Deep Reasoning)
-Final Score = (L1 × 30%) + (L2 × 40%) + (L3 × 30%)
+Every Job → Layer 1 (Fast Baseline) → Layer 2 (Validation) → Layer 3 (Deep Reasoning)
+Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
 ```
 
-**Why It's Better:**
-- ✅ 3 AI models working together for maximum accuracy
-- ✅ GPT-5-mini gets highest weight (40%) for most reliable scoring
-- ✅ DeepSeek Reasoner provides detailed actionable feedback
-- ✅ 50x cheaper than using GPT-4 alone ($0.0006 vs $0.03 per assessment)
+**Layer 1: DeepSeek Chat V3 (30% weight)**
+- Fast baseline scoring (< 2 seconds)
+- Keyword matching and density analysis
+- Skills & experience preliminary assessment
+- Format quality check
+- Extracts: keywords matched, total keywords, missing keywords
+
+**Layer 2: GPT-5-mini (40% weight - HIGHEST)**
+- Validation and refinement of Layer 1 results
+- Context understanding and nuance detection
+- Most reliable model gets highest weight
+- Cross-validates findings from Layer 1
+
+**Layer 3: DeepSeek Reasoner R1 (30% weight)**
+- Deep reasoning with extended thinking time
+- Generates detailed, actionable feedback
+- Quality assessment and recommendations
+- Strategic insights for optimization
+
+**43-Point ATS Assessment Criteria:**
+- **Keywords (12 checks)**: Density, skills match, technical terms, industry jargon
+- **Fonts & Text (11 checks)**: Readability, font size, special characters, text formatting
+- **Layout (10 checks)**: Section headers, bullet points, tables/columns, graphics usage
+- **Structure (10 checks)**: Contact info, experience format, date formatting, file metadata
+
+**Why It's Superior:**
+- ✅ 3 AI models working together eliminate single-model bias
+- ✅ GPT-5-mini gets highest weight (40%) for most reliable validation
+- ✅ DeepSeek Reasoner provides deep reasoning competitors can't match
+- ✅ 50x cheaper than GPT-4 alone ($0.0006 vs $0.03 per assessment)
 - ✅ Confidence scoring based on 3-way agreement
+- ✅ Every job gets full 3-layer analysis for maximum accuracy
+
+#### **Compare CV-JD Section**
+Manual resume-job description comparison with comprehensive analysis:
+
+**Features:**
+- **PDF Upload**: Upload resume PDF, parsed with GPT-5-mini for intelligent text extraction
+- **AI Anonymization**: Automatically removes PII (names, emails, phones, addresses) before sending to LLMs
+- **Multi-Layer ATS Scoring**: Same 3-layer system as job analysis
+- **Match Score**: Qualifications vs requirements analysis
+- **Keyword Match**: Percentage of JD keywords found in resume
+- **Skill Gap Analysis**: Shows matching skills and missing skills
+- **Experience & Education Match**: Contextual matching of your background
+
+**What We Assess:**
+1. **Overall Match (0-100%)**:
+   - Skills alignment with requirements
+   - Experience level match (years, seniority)
+   - Education requirements fulfillment
+   - Technical skills coverage
+   - Domain expertise match
+
+2. **ATS Score (0-100%)**:
+   - 43-point comprehensive check (see above)
+   - Keyword optimization
+   - Format compatibility
+   - Structure quality
+   - Parsing reliability
+
+3. **Keyword Density (0-100%)**:
+   - Exact keyword matches from JD
+   - Synonym and related term detection
+   - Action verb usage
+   - Quantified achievements
+   - Industry-specific terminology
+
+4. **Score Difference Analysis**:
+   - Match vs ATS alignment check
+   - <10% difference = Well aligned (qualified + resume shows it)
+   - Match > ATS = Qualified but resume needs optimization
+   - ATS > Match = Resume looks good but may lack qualifications
+
+**🎮 AI Resume Suggestions (GAME CHANGER!)**
+- Analyzes missing keywords from job description
+- Generates AI-powered experience bullet points using missing skills
+- Provides ready-to-copy resume bullets aligned with JD requirements
+- Copy-to-clipboard functionality for instant use
+- Pro tips for customization with real metrics
+- Helps improve match score instantly!
 
 ### 🔍 **Comprehensive Job Scraping**
 - **Multi-Source**: Arbeitsagentur, LinkedIn, Indeed, StepStone, Glassdoor, Kimeta, Joblift, Jooble

@@ -482,6 +482,200 @@ export default function CompareResume() {
               </div>
             </div>
 
+            {/* COMPREHENSIVE ATS KEYWORD ANALYSIS */}
+            {analysis.keyword_analysis && (
+              <div className="space-y-6">
+                {/* Score Improvement Potential */}
+                <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-300 p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                    <TrendingUp className="h-6 w-6 mr-2 text-emerald-600" />
+                    ATS Score Improvement Potential
+                  </h3>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <div className="text-center bg-white rounded-lg p-4">
+                      <div className="text-3xl font-bold text-gray-900">{analysis.keyword_analysis.current_ats_score || 0}%</div>
+                      <div className="text-sm text-gray-600 font-semibold">Current Score</div>
+                    </div>
+                    <div className="text-center bg-white rounded-lg p-4">
+                      <div className="text-3xl font-bold text-emerald-600">+{analysis.keyword_analysis.score_improvement_potential || 0}%</div>
+                      <div className="text-sm text-gray-600 font-semibold">Potential Gain</div>
+                    </div>
+                    <div className="text-center bg-white rounded-lg p-4">
+                      <div className="text-3xl font-bold text-green-600">{analysis.keyword_analysis.estimated_score_after_fixes || 0}%</div>
+                      <div className="text-sm text-gray-600 font-semibold">After Fixes</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Priority Actions */}
+                {analysis.keyword_analysis.gap_analysis?.priority_actions && (
+                  <div className="bg-gradient-to-r from-red-50 to-orange-50 rounded-lg border-2 border-red-300 p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <AlertCircle className="h-6 w-6 mr-2 text-red-600" />
+                      🚨 Priority Actions (Do These First!)
+                    </h3>
+                    <div className="space-y-2">
+                      {analysis.keyword_analysis.gap_analysis.priority_actions.map((action: string, index: number) => (
+                        <div key={index} className="bg-white rounded-lg p-3 border border-red-200">
+                          <p className="text-sm text-gray-800">{action}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Missing Critical Keywords */}
+                {analysis.keyword_analysis.gap_analysis?.missing_critical && analysis.keyword_analysis.gap_analysis.missing_critical.length > 0 && (
+                  <div className="bg-white rounded-lg border-2 border-yellow-300 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                      <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
+                      ❌ Missing Critical Keywords
+                    </h3>
+                    <div className="space-y-4">
+                      {analysis.keyword_analysis.gap_analysis.missing_critical.map((item: any, index: number) => (
+                        <div key={index} className="border border-yellow-200 rounded-lg p-4 bg-yellow-50">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="font-semibold text-gray-900 flex items-center gap-2">
+                              <span className="px-2 py-1 bg-yellow-200 text-yellow-900 rounded text-xs font-bold">
+                                IMPORTANCE: {item.importance}/100
+                              </span>
+                              <span>{item.keyword}</span>
+                            </div>
+                            <span className="text-xs bg-red-500 text-white px-2 py-1 rounded">{item.impact}</span>
+                          </div>
+                          <p className="text-sm text-gray-600 mb-2"><strong>Why missing:</strong> {item.why_missing}</p>
+                          <div className="bg-white rounded p-3 border border-yellow-300">
+                            <p className="text-xs text-gray-500 mb-1 font-semibold">✅ RECOMMENDATION:</p>
+                            <p className="text-sm text-gray-800">{item.recommendation}</p>
+                            <p className="text-xs text-gray-500 mt-2"><strong>Where:</strong> {item.where_to_add}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Strategic Improvements */}
+                {analysis.keyword_analysis.gap_analysis?.strategic_improvements && analysis.keyword_analysis.gap_analysis.strategic_improvements.length > 0 && (
+                  <div className="bg-white rounded-lg border-2 border-blue-300 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                      <Sparkles className="h-5 w-5 mr-2 text-blue-600" />
+                      💡 Strategic Section-by-Section Improvements
+                    </h3>
+                    <div className="space-y-4">
+                      {analysis.keyword_analysis.gap_analysis.strategic_improvements.map((item: any, index: number) => (
+                        <div key={index} className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+                          <div className="flex items-start justify-between mb-2">
+                            <div className="font-semibold text-blue-900">{item.section}</div>
+                            <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">{item.impact}</span>
+                          </div>
+                          <div className="mb-2">
+                            <span className="text-xs text-red-600 font-semibold">❌ Current Issue:</span>
+                            <p className="text-sm text-gray-700 ml-4">{item.current_issue}</p>
+                          </div>
+                          <div className="mb-2">
+                            <span className="text-xs text-green-600 font-semibold">✅ Fix:</span>
+                            <p className="text-sm text-gray-700 ml-4">{item.fix}</p>
+                          </div>
+                          {item.example && (
+                            <div className="bg-white rounded p-3 border border-blue-300 mt-2">
+                              <p className="text-xs text-gray-500 mb-1 font-semibold">📝 EXAMPLE:</p>
+                              <p className="text-sm text-gray-800 italic">{item.example}</p>
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(item.example)
+                                  alert('✅ Example copied to clipboard!')
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800 font-medium mt-2"
+                              >
+                                📋 Copy Example
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* JD-Resume Comparison Table */}
+                {analysis.keyword_analysis.comparison_table && analysis.keyword_analysis.comparison_table.length > 0 && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                      <CheckCircle className="h-5 w-5 mr-2 text-gray-600" />
+                      📊 JD Requirements vs Your Resume - Side by Side
+                    </h3>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead className="bg-gray-100">
+                          <tr>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-700">Importance</th>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-700">JD Requirement</th>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-700">Category</th>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-700">Resume Status</th>
+                            <th className="px-4 py-3 text-left font-semibold text-gray-700">Action Needed</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-200">
+                          {analysis.keyword_analysis.comparison_table.slice(0, 15).map((row: any, index: number) => (
+                            <tr key={index} className="hover:bg-gray-50">
+                              <td className="px-4 py-3">
+                                <span className={`px-2 py-1 rounded text-xs font-bold ${
+                                  row.importance >= 90 ? 'bg-red-100 text-red-700' :
+                                  row.importance >= 75 ? 'bg-orange-100 text-orange-700' :
+                                  'bg-yellow-100 text-yellow-700'
+                                }`}>
+                                  {row.importance}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3 font-medium">{row.jd_requirement}</td>
+                              <td className="px-4 py-3 text-gray-600 text-xs">{row.category.replace(/_/g, ' ')}</td>
+                              <td className="px-4 py-3">{row.resume_status}</td>
+                              <td className="px-4 py-3 text-xs text-gray-600">{row.action_needed}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                )}
+
+                {/* Categorized Keywords from JD */}
+                {analysis.keyword_analysis.categorized_keywords && (
+                  <div className="bg-white rounded-lg border border-gray-200 p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-4">🎯 All ATS Keywords Extracted from Job Description</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {Object.entries(analysis.keyword_analysis.categorized_keywords).map(([category, keywords]: [string, any]) => {
+                        if (category === 'ats_critical_phrases' || !Array.isArray(keywords) || keywords.length === 0) return null
+                        return (
+                          <div key={category} className="bg-gray-50 rounded-lg p-4">
+                            <h4 className="font-semibold text-gray-900 mb-3 capitalize">{category.replace(/_/g, ' ')}</h4>
+                            <div className="space-y-2">
+                              {keywords.slice(0, 5).map((kw: any, idx: number) => (
+                                <div key={idx} className="flex items-start gap-2">
+                                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                    kw.importance >= 90 ? 'bg-red-100 text-red-700' :
+                                    kw.importance >= 80 ? 'bg-orange-100 text-orange-700' :
+                                    'bg-blue-100 text-blue-700'
+                                  }`}>
+                                    {kw.importance}
+                                  </span>
+                                  <div>
+                                    <div className="text-sm font-medium text-gray-900">{kw.keyword}</div>
+                                    <div className="text-xs text-gray-500">{kw.context}</div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* AI-Generated Resume Suggestions - GAME CHANGER! */}
             {(analysis.missing_skills?.length > 0 || analysis.concerns?.length > 0) && (
               <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-300 p-6">

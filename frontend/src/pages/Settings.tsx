@@ -6,6 +6,7 @@ import { userApi } from '../lib/api'
 export default function Settings() {
   const queryClient = useQueryClient()
   const [activeTab, setActiveTab] = useState('profile')
+  const [newKeywords, setNewKeywords] = useState('') // Separate state for new keywords
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -95,8 +96,23 @@ export default function Settings() {
   }
 
   const handleSavePreferences = () => {
-    console.log('Saving preferences:', formData)
-    updateProfileMutation.mutate(formData)
+    // Merge new keywords with existing ones
+    const existingKeywords = profile?.search_keywords || ''
+    const newKeywordsList = newKeywords.trim().split(',').map(k => k.trim()).filter(k => k)
+    const existingKeywordsList = existingKeywords ? existingKeywords.split(',').map(k => k.trim()) : []
+    
+    // Combine and remove duplicates
+    const allKeywords = [...new Set([...existingKeywordsList, ...newKeywordsList])]
+    const mergedKeywords = allKeywords.join(', ')
+    
+    console.log('Saving preferences with merged keywords:', mergedKeywords)
+    updateProfileMutation.mutate({
+      ...formData,
+      search_keywords: mergedKeywords
+    })
+    
+    // Clear the new keywords input field after save
+    setNewKeywords('')
   }
 
   const tabs = [
@@ -299,35 +315,19 @@ export default function Settings() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Add Keywords (comma-separated)
+                      Add New Keywords (comma-separated)
                       <span className="text-xs text-gray-500 ml-2">💡 These will be added to your existing keywords</span>
                     </label>
                     <textarea
-                      name="search_keywords"
-                      value={formData.search_keywords}
-                      onChange={handleInputChange}
+                      value={newKeywords}
+                      onChange={(e) => setNewKeywords(e.target.value)}
                       placeholder="Add new keywords like: Deep Learning, NLP Engineer, Computer Vision..."
                       rows={3}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 font-mono text-sm"
                     />
                     <p className="mt-1 text-xs text-gray-500">
-                      💡 Tip: Your existing keywords are shown below. New keywords you type here will be added to them.
+                      💡 Tip: Type new keywords here and click Save. Your existing keywords are shown below.
                     </p>
-                    {profile?.search_keywords && (
-                      <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                        <p className="text-xs font-medium text-blue-700 mb-2">✓ Current Saved Keywords ({profile.search_keywords.split(',').length}):</p>
-                        <div className="flex flex-wrap gap-2">
-                          {profile.search_keywords.split(',').map((keyword, idx) => (
-                            <span
-                              key={idx}
-                              className="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-sm font-medium"
-                            >
-                              {keyword.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -367,18 +367,36 @@ export default function Settings() {
                         🎯 Your Current Keywords (Used for Match Score)
                       </h4>
                       <div className="flex flex-wrap gap-2 mb-3">
-                        {profile.search_keywords.split(',').map((keyword, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1.5 bg-white border-2 border-blue-400 text-blue-700 rounded-full text-sm font-semibold shadow-sm"
-                          >
-                            {keyword.trim()}
-                          </span>
-                        ))}
+                        {profile.search_keywords.split(',').map((keyword, idx) => {
+                          const trimmedKeyword = keyword.trim()
+                          return (
+                            <span
+                              key={idx}
+                              className="px-3 py-1.5 bg-white border-2 border-blue-400 text-blue-700 rounded-full text-sm font-semibold shadow-sm flex items-center gap-2"
+                            >
+                              {trimmedKeyword}
+                              <button
+                                onClick={() => {
+                                  const allKeywords = profile.search_keywords.split(',').map(k => k.trim())
+                                  const filtered = allKeywords.filter(k => k !== trimmedKeyword)
+                                  updateProfileMutation.mutate({
+                                    ...formData,
+                                    search_keywords: filtered.join(', ')
+                                  })
+                                }}
+                                className="text-red-500 hover:text-red-700 font-bold"
+                                title="Remove keyword"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          )
+                        })}
                       </div>
                       <p className="text-xs text-gray-600">
                         💡 These keywords are matched against job titles and descriptions. 
                         Jobs matching these keywords get higher scores (30% weight in algorithm).
+                        Click × to remove any keyword.
                       </p>
                     </div>
                   </div>
