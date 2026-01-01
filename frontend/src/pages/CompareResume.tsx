@@ -485,6 +485,30 @@ export default function CompareResume() {
             {/* COMPREHENSIVE ATS KEYWORD ANALYSIS */}
             {analysis.keyword_analysis && (
               <div className="space-y-6">
+                {/* Score Clarity Box */}
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300 p-6">
+                  <h3 className="text-lg font-bold text-gray-900 mb-3">📊 Understanding Your ATS Score</h3>
+                  <div className="bg-white rounded-lg p-4 space-y-3 text-sm">
+                    <div>
+                      <div className="font-semibold text-blue-900 flex items-center gap-2">
+                        <span className="text-2xl">{analysis.ats_score}%</span>
+                        <span className="text-sm">← Your REAL ATS Score (Realistic)</span>
+                      </div>
+                      <p className="text-xs text-gray-600 ml-8 mt-1">
+                        Based on deep keyword analysis using DeepSeek Reasoner. This is what recruiters' ATS systems will see.
+                      </p>
+                    </div>
+                    {analysis.multi_layer_breakdown && (
+                      <div className="pt-2 border-t border-gray-200">
+                        <p className="text-xs text-gray-500">
+                          <strong>Note:</strong> Multi-layer AI gives optimistic score ({analysis.multi_layer_breakdown.layer2_validation}%). 
+                          We show the realistic keyword-based score above for accuracy.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Score Improvement Potential */}
                 <div className="bg-gradient-to-r from-emerald-50 to-green-50 rounded-lg border-2 border-emerald-300 p-6">
                   <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
@@ -520,6 +544,191 @@ export default function CompareResume() {
                           <p className="text-sm text-gray-800">{action}</p>
                         </div>
                       ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* JD-SPECIFIC PROFESSIONAL SUMMARY */}
+                {analysis.resume_optimizations?.jd_specific_summary?.summary && (
+                  <div className="bg-gradient-to-r from-purple-50 to-indigo-50 rounded-lg border-2 border-purple-300 p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <Sparkles className="h-6 w-6 mr-2 text-purple-600" />
+                      ✨ JD-Specific Professional Summary
+                      <span className="ml-2 text-xs bg-purple-600 text-white px-2 py-1 rounded-full">WITH YOUR REAL METRICS</span>
+                    </h3>
+                    <div className="bg-white rounded-lg p-4 space-y-4">
+                      <div>
+                        <p className="text-sm text-gray-700 italic border-l-4 border-purple-500 pl-4 py-2">
+                          "{analysis.resume_optimizations.jd_specific_summary.summary}"
+                        </p>
+                        <div className="flex items-center gap-2 mt-3">
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(analysis.resume_optimizations.jd_specific_summary.summary)
+                              alert('✅ Summary copied to clipboard!')
+                            }}
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium"
+                          >
+                            📋 Copy Summary
+                          </button>
+                        </div>
+                      </div>
+                      
+                      {analysis.resume_optimizations.jd_specific_summary.key_metrics_used && 
+                       analysis.resume_optimizations.jd_specific_summary.key_metrics_used.length > 0 && (
+                        <div className="bg-green-50 rounded p-3">
+                          <h4 className="text-xs font-semibold text-green-900 mb-2">✅ Your Real Metrics Used:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.resume_optimizations.jd_specific_summary.key_metrics_used.map((metric: string, idx: number) => (
+                              <span key={idx} className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">
+                                {metric}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {analysis.resume_optimizations.jd_specific_summary.jd_keywords_incorporated && 
+                       analysis.resume_optimizations.jd_specific_summary.jd_keywords_incorporated.length > 0 && (
+                        <div className="bg-blue-50 rounded p-3">
+                          <h4 className="text-xs font-semibold text-blue-900 mb-2">🎯 JD Keywords Incorporated:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.resume_optimizations.jd_specific_summary.jd_keywords_incorporated.map((kw: string, idx: number) => (
+                              <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                {kw}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* SKILLS SECTION SUGGESTIONS */}
+                {analysis.resume_optimizations?.skills_section_suggestions && (
+                  <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg border-2 border-cyan-300 p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <CheckCircle className="h-6 w-6 mr-2 text-cyan-600" />
+                      🔧 Skills Section - Keywords to Add
+                    </h3>
+                    
+                    <div className="space-y-4">
+                      {analysis.resume_optimizations.skills_section_suggestions.hard_skills_to_add && 
+                       analysis.resume_optimizations.skills_section_suggestions.hard_skills_to_add.length > 0 && (
+                        <div className="bg-white rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">💻 Technical Skills to Add:</h4>
+                          <div className="space-y-2">
+                            {analysis.resume_optimizations.skills_section_suggestions.hard_skills_to_add.map((skill: any, idx: number) => (
+                              <div key={idx} className="flex items-center gap-2">
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${
+                                  skill.importance >= 90 ? 'bg-red-100 text-red-700' :
+                                  skill.importance >= 80 ? 'bg-orange-100 text-orange-700' :
+                                  'bg-blue-100 text-blue-700'
+                                }`}>
+                                  {skill.importance}
+                                </span>
+                                <span className="text-sm font-medium text-gray-900">{skill.skill}</span>
+                                {skill.jd_mentions && (
+                                  <span className="text-xs text-gray-500">({skill.jd_mentions}x in JD)</span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {analysis.resume_optimizations.skills_section_suggestions.tools_to_add && 
+                       analysis.resume_optimizations.skills_section_suggestions.tools_to_add.length > 0 && (
+                        <div className="bg-white rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">🛠️ Tools & Technologies to Add:</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {analysis.resume_optimizations.skills_section_suggestions.tools_to_add.map((tool: any, idx: number) => (
+                              <span key={idx} className="px-3 py-1 bg-gray-100 text-gray-800 rounded text-sm">
+                                {tool.skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {analysis.resume_optimizations.skills_section_suggestions.recommended_skills_section && (
+                        <div className="bg-white rounded-lg p-4">
+                          <h4 className="font-semibold text-gray-900 mb-3">📝 Recommended Skills Section (Copy This):</h4>
+                          <div className="bg-gray-50 rounded p-3 border border-gray-200">
+                            <p className="text-sm text-gray-800 font-mono">
+                              {analysis.resume_optimizations.skills_section_suggestions.recommended_skills_section}
+                            </p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                              navigator.clipboard.writeText(analysis.resume_optimizations.skills_section_suggestions.recommended_skills_section)
+                              alert('✅ Skills section copied!')
+                            }}
+                            className="mt-3 px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 text-sm font-medium"
+                          >
+                            📋 Copy Skills Section
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* EXPERIENCE BULLETS MAPPED TO YOUR COMPANIES */}
+                {analysis.resume_optimizations?.experience_bullet_suggestions && 
+                 analysis.resume_optimizations.experience_bullet_suggestions.length > 0 && (
+                  <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-lg border-2 border-orange-300 p-6">
+                    <h3 className="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                      <Sparkles className="h-6 w-6 mr-2 text-orange-600" />
+                      💼 Experience Bullets - Mapped to YOUR Companies
+                      <span className="ml-2 text-xs bg-orange-600 text-white px-2 py-1 rounded-full">CONTEXTUAL</span>
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      These bullets are mapped to your actual work experience and include realistic metrics:
+                    </p>
+                    <div className="space-y-4">
+                      {analysis.resume_optimizations.experience_bullet_suggestions.map((bullet: any, idx: number) => (
+                        <div key={idx} className="bg-white rounded-lg p-4 border border-orange-200">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-gray-900">{bullet.company}</h4>
+                              <p className="text-sm text-gray-600">{bullet.role}</p>
+                            </div>
+                            <span className="px-2 py-1 bg-orange-100 text-orange-700 rounded text-xs font-semibold">
+                              {bullet.keyword_added}
+                            </span>
+                          </div>
+                          <div className="bg-gray-50 rounded p-3 mb-2">
+                            <p className="text-sm text-gray-800">• {bullet.bullet}</p>
+                          </div>
+                          {bullet.impact_metric && (
+                            <div className="text-xs text-green-700 bg-green-50 rounded px-2 py-1 inline-block mb-2">
+                              📊 {bullet.impact_metric}
+                            </div>
+                          )}
+                          <div className="flex items-center gap-3 mt-2">
+                            <button 
+                              onClick={() => {
+                                navigator.clipboard.writeText(`• ${bullet.bullet}`)
+                                alert('✅ Bullet copied!')
+                              }}
+                              className="text-xs text-orange-600 hover:text-orange-800 font-medium"
+                            >
+                              📋 Copy Bullet
+                            </button>
+                            <span className="text-xs text-gray-500">
+                              Why here: {bullet.why_this_company}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+                      <p className="text-xs text-yellow-800">
+                        <span className="font-semibold">💡 Pro Tip:</span> These bullets are mapped to your actual companies. 
+                        Adjust the metrics if needed to match your real achievements!
+                      </p>
                     </div>
                   </div>
                 )}
