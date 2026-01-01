@@ -98,4 +98,19 @@ export const analyticsApi = {
   getSuccessRate: () => api.get('/api/analytics/success-rate'),
 }
 
+export const manualPrepApi = {
+  list: (params?: { status?: string; search?: string; include_expired?: boolean }) => 
+    api.get('/api/manual-prep', { params }),
+  get: (id: number) => api.get(`/api/manual-prep/${id}`),
+  create: (data: { company_name: string; job_url?: string; job_title?: string; job_description?: string }) =>
+    api.post('/api/manual-prep', null, { params: data }),
+  update: (id: number, data: { status?: string; interview_date?: string; is_favorite?: boolean; user_notes?: string }) =>
+    api.put(`/api/manual-prep/${id}`, null, { params: data }),
+  delete: (id: number) => api.delete(`/api/manual-prep/${id}`),
+  regenerate: (id: number, section?: string) =>
+    api.post(`/api/manual-prep/${id}/regenerate`, null, { params: { section } }),
+  cleanup: () => api.post('/api/manual-prep/cleanup'),
+  getStats: () => api.get('/api/manual-prep/stats/summary'),
+}
+
 export default api

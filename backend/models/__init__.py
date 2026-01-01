@@ -6,6 +6,7 @@ from models.application import Application
 from models.user import UserProfile, ResumeVersion, CoverLetterTemplate
 from models.company import Company
 from models.scraping_log import ScrapingLog
+from models.manual_prep import ManualPrep
 
 __all__ = [
     "Job",
@@ -16,4 +17,5 @@ __all__ = [
     "CoverLetterTemplate",
     "Company",
     "ScrapingLog",
+    "ManualPrep",
 ]

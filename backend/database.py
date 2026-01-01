@@ -44,7 +44,7 @@ def get_db():
 
 def init_db():
     """Initialize database - create all tables"""
-    from models import job, application, user, company, scraping_log
+    from models import job, application, user, company, scraping_log, manual_prep
     Base.metadata.create_all(bind=engine)
     print("✅ Database initialized successfully!")
 

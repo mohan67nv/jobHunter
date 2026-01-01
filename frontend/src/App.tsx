@@ -7,6 +7,7 @@ import ResumeManager from './pages/ResumeManager'
 import Templates from './pages/Templates'
 import Applications from './pages/Applications'
 import InterviewPrep from './pages/InterviewPrep'
+import ManualPrep from './pages/ManualPrep'
 import Layout from './components/Layout'
 
 function App() {
@@ -20,6 +21,7 @@ function App() {
         <Route path="/templates" element={<Templates />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/interview-prep" element={<InterviewPrep />} />
+        <Route path="/manual-prep" element={<ManualPrep />} />
         <Route path="/settings" element={<Settings />} />
       </Routes>
     </Layout>

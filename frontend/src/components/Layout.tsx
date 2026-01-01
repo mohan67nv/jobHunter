@@ -1,6 +1,6 @@
 import { ReactNode } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LayoutDashboard, BarChart3, Settings, Menu, Briefcase, GitCompare, FileText, Layers, CheckSquare, Sparkles } from 'lucide-react'
+import { LayoutDashboard, BarChart3, Settings, Menu, Briefcase, GitCompare, FileText, Layers, CheckSquare, Sparkles, Target } from 'lucide-react'
 import { cn } from '../lib/utils'
 
 interface LayoutProps {
@@ -15,6 +15,7 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/compare', label: 'Compare CV-JD', icon: GitCompare },
     { path: '/applications', label: 'Applications', icon: CheckSquare },
     { path: '/interview-prep', label: 'Interview Prep', icon: Sparkles },
+    { path: '/manual-prep', label: 'Manual Prep', icon: Target },
     { path: '/resumes', label: 'Resume Versions', icon: FileText },
     { path: '/templates', label: 'Templates', icon: Layers },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },

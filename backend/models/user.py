@@ -3,6 +3,7 @@ User profile, resume versions, and cover letter templates
 """
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, CheckConstraint
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 from database import Base
 
 
@@ -39,6 +40,9 @@ class UserProfile(Base):
     __table_args__ = (
         CheckConstraint('id = 1', name='singleton_user_profile'),
     )
+    
+    # Relationships
+    manual_preps = relationship("ManualPrep", back_populates="user", lazy="dynamic")
     
     def __repr__(self):
         return f"<UserProfile(name='{self.name}', email='{self.email}')>"
