@@ -56,6 +56,16 @@ class JobScheduler:
             )
             logger.info(f"   Analysis scheduled every {settings.analysis_interval_hours} hours")
         
+        # Schedule manual prep cleanup (daily)
+        self.scheduler.add_job(
+            func=self._cleanup_expired_preps,
+            trigger=IntervalTrigger(hours=24),
+            id='cleanup_manual_preps',
+            name='Cleanup expired manual preps',
+            replace_existing=True
+        )
+        logger.info("   Manual prep cleanup scheduled daily")
+        
         self.scheduler.start()
         self.is_running = True
         logger.info("✅ Scheduler started successfully")
@@ -187,6 +197,36 @@ class JobScheduler:
     def get_jobs(self):
         """Get all scheduled jobs"""
         return self.scheduler.get_jobs()
+    
+    def _cleanup_expired_preps(self):
+        """Cleanup expired manual preps (auto-archive after 30 days)"""
+        logger.info("⏰ Running scheduled cleanup of expired manual preps...")
+        
+        try:
+            from models.manual_prep import ManualPrep
+            db = self.db_factory()
+            
+            now = datetime.utcnow()
+            expired_preps = db.query(ManualPrep).filter(
+                ManualPrep.expires_at <= now,
+                ManualPrep.status == 'active'
+            ).all()
+            
+            count = 0
+            for prep in expired_preps:
+                prep.status = 'archived'
+                count += 1
+            
+            if count > 0:
+                db.commit()
+                logger.info(f"✅ Archived {count} expired manual preps")
+            else:
+                logger.info("✅ No expired manual preps to archive")
+            
+            db.close()
+            
+        except Exception as e:
+            logger.error(f"❌ Error in manual prep cleanup: {e}")
 
 
 def setup_scheduler(db_factory):

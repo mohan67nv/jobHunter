@@ -75,19 +75,30 @@ export default function ManualPrep() {
   // Create manual prep mutation
   const createPrepMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const response = await fetch('http://localhost:8000/api/manual-prep', {
+      const params = new URLSearchParams()
+      params.append('company_name', data.company_name)
+      if (data.job_title) params.append('job_title', data.job_title)
+      if (data.job_url) params.append('job_url', data.job_url)
+      if (data.job_description) params.append('job_description', data.job_description)
+      
+      const response = await fetch(`http://localhost:8000/api/manual-prep?${params}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
       })
-      if (!response.ok) throw new Error('Failed to create prep')
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Failed to create prep')
+      }
       return response.json()
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['manual-preps'] })
-      setSelectedPrepId(data.id)
+      setSelectedPrepId(data.data.id)
       setShowCreateForm(false)
       setFormData({ company_name: '', job_title: '', job_url: '', job_description: '' })
+      alert('✅ Manual prep created successfully! AI is generating content...')
+    },
+    onError: (error: any) => {
+      alert(`❌ Failed to create prep: ${error.message}`)
     }
   })
 
@@ -111,10 +122,8 @@ export default function ManualPrep() {
   // Toggle favorite mutation
   const toggleFavoriteMutation = useMutation({
     mutationFn: async ({ prepId, isFavorite }: { prepId: number, isFavorite: boolean }) => {
-      const response = await fetch(`http://localhost:8000/api/manual-prep/${prepId}`, {
+      const response = await fetch(`http://localhost:8000/api/manual-prep/${prepId}?is_favorite=${!isFavorite}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_favorite: !isFavorite })
       })
       if (!response.ok) throw new Error('Failed to update favorite')
       return response.json()
@@ -122,6 +131,29 @@ export default function ManualPrep() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['manual-preps'] })
       queryClient.invalidateQueries({ queryKey: ['manual-prep', selectedPrepId] })
+    }
+  })
+
+  // Export to PDF mutation
+  const exportPdfMutation = useMutation({
+    mutationFn: async (prepId: number) => {
+      const response = await fetch(`http://localhost:8000/api/manual-prep/${prepId}/export-pdf`, {
+        method: 'GET',
+      })
+      if (!response.ok) throw new Error('Failed to export PDF')
+      const blob = await response.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `interview_prep_${prepId}.pdf`
+      a.click()
+      window.URL.revokeObjectURL(url)
+    },
+    onSuccess: () => {
+      alert('✅ PDF exported successfully!')
+    },
+    onError: () => {
+      alert('❌ Failed to export PDF')
     }
   })
 

@@ -3,6 +3,7 @@ Manual Prep API Router
 Endpoints for manually created interview preparation sessions
 """
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from datetime import datetime, timedelta
@@ -11,6 +12,7 @@ from models.manual_prep import ManualPrep
 from models.user import UserProfile
 from ai_agents.manual_prep_agent import ManualPrepAgent
 from utils.logger import setup_logger
+from utils.pdf_export import generate_prep_pdf
 import json
 
 router = APIRouter(prefix="/api/manual-prep", tags=["manual-prep"])
@@ -384,4 +386,40 @@ async def get_prep_stats(
         
     except Exception as e:
         logger.error(f"❌ Error fetching prep stats: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{prep_id}/export-pdf")
+async def export_prep_pdf(
+    prep_id: int,
+    user_id: int = 1,  # TODO: Get from auth
+    db: Session = Depends(get_db)
+):
+    """Export manual prep as PDF"""
+    try:
+        prep = db.query(ManualPrep).filter(
+            ManualPrep.id == prep_id,
+            ManualPrep.user_id == user_id
+        ).first()
+        
+        if not prep:
+            raise HTTPException(status_code=404, detail="Manual prep not found")
+        
+        # Generate PDF
+        pdf_buffer = generate_prep_pdf(prep.to_dict())
+        
+        logger.info(f"✅ Exported manual prep {prep_id} as PDF")
+        
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={
+                "Content-Disposition": f"attachment; filename=interview_prep_{prep.company_name.replace(' ', '_')}_{prep_id}.pdf"
+            }
+        )
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Error exporting prep PDF {prep_id}: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

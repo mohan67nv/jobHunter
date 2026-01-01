@@ -1,16 +1,44 @@
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { FileText, Sparkles, AlertCircle, CheckCircle, TrendingUp } from 'lucide-react'
+import { FileText, Sparkles, AlertCircle, CheckCircle, TrendingUp, Upload } from 'lucide-react'
 import { analysisApi } from '../lib/api'
 
 export default function CompareResume() {
   const [resumeText, setResumeText] = useState('')
   const [jdText, setJdText] = useState('')
   const [analysis, setAnalysis] = useState<any>(null)
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
+
+  // PDF upload mutation
+  const uploadPdfMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData()
+      formData.append('file', file)
+      
+      const response = await fetch('http://localhost:8000/api/analysis/parse-resume-pdf', {
+        method: 'POST',
+        body: formData
+      })
+      
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.detail || 'Failed to parse PDF')
+      }
+      
+      return response.json()
+    },
+    onSuccess: (data) => {
+      setResumeText(data.resume_text)
+      alert('✅ PDF parsed successfully!')
+    },
+    onError: (error: any) => {
+      alert(`❌ Failed to parse PDF: ${error.message}`)
+    }
+  })
 
   const analyzeMutation = useMutation({
     mutationFn: async () => {
-      if (!resumeText.trim()) throw new Error('Please enter your resume text')
+      if (!resumeText.trim()) throw new Error('Please enter your resume text or upload PDF')
       if (!jdText.trim()) throw new Error('Please enter job description')
       
       const response = await analysisApi.analyzeCustom(resumeText, jdText)
@@ -18,7 +46,7 @@ export default function CompareResume() {
     },
     onSuccess: (data) => {
       setAnalysis(data)
-      console.log('✅ CV-JD comparison completed successfully', data)
+      console.log('✅ CV-JD comparison completed with multi-layer ATS', data)
     },
     onError: (error: any) => {
       const errorMsg = error.response?.data?.detail || error.message || 'Analysis failed'
@@ -26,6 +54,16 @@ export default function CompareResume() {
       alert(`❌ ${errorMsg}`)
     },
   })
+
+  const handlePdfUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file && file.type === 'application/pdf') {
+      setPdfFile(file)
+      uploadPdfMutation.mutate(file)
+    } else {
+      alert('Please select a valid PDF file')
+    }
+  }
 
   const handleLoadFromProfile = async () => {
     try {
@@ -81,10 +119,36 @@ export default function CompareResume() {
               <h2 className="text-lg font-semibold text-gray-900">Your Resume</h2>
               <span className="text-sm text-gray-500">{resumeText.length} characters</span>
             </div>
+            
+            {/* PDF Upload */}
+            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-blue-300">
+              <label className="flex items-center justify-center gap-2 cursor-pointer">
+                <Upload className="h-5 w-5 text-blue-600" />
+                <span className="text-blue-600 font-semibold">Upload PDF Resume</span>
+                <input 
+                  type="file" 
+                  accept="application/pdf" 
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                />
+              </label>
+              {uploadPdfMutation.isPending && (
+                <div className="mt-2 text-center text-sm text-blue-600">
+                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                  Parsing PDF with GPT-5-mini...
+                </div>
+              )}
+              {pdfFile && !uploadPdfMutation.isPending && (
+                <div className="mt-2 text-center text-sm text-green-600">
+                  ✅ {pdfFile.name}
+                </div>
+              )}
+            </div>
+            
             <textarea
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
-              placeholder="Paste your resume text here... (or upload from Settings)"
+              placeholder="Upload PDF above OR paste your resume text here..."
               className="w-full h-96 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none font-mono text-sm"
             />
             <div className="mt-4 flex gap-2">
@@ -130,24 +194,38 @@ export default function CompareResume() {
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
             <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
-            AI Analysis Scoring Rules
+            Multi-Layer AI ATS Scoring (DeepSeek + GPT-5-mini)
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-white rounded-lg p-4">
-              <h4 className="font-semibold text-gray-900 mb-3">Match Score Breakdown:</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Skills match</span>
-                  <span className="font-semibold text-blue-600">40%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Experience relevance</span>
-                  <span className="font-semibold text-green-600">30%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Education match</span>
-                  <span className="font-semibold text-purple-600">20%</span>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="bg-white rounded-lg p-4 border-2 border-blue-200">
+              <h4 className="font-semibold text-blue-900 mb-3">Layer 1: DeepSeek-V3.2 (30%)</h4>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div>• Fast baseline scoring</div>
+                <div>• Skills & experience match</div>
+                <div>• Quick assessment</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+              <h4 className="font-semibold text-green-900 mb-3">Layer 2: GPT-5-mini (40%)</h4>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div>• Validation & verification</div>
+                <div>• Context understanding</div>
+                <div>• Highest weight</div>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+              <h4 className="font-semibold text-purple-900 mb-3">Layer 3: DeepSeek-R1 (30%)</h4>
+              <div className="space-y-2 text-sm text-gray-700">
+                <div>• Deep reasoning</div>
+                <div>• Quality assessment</div>
+                <div>• Detailed feedback</div>
+              </div>
+            </div>
+          </div>
+          <div className="mt-4 text-center text-sm text-gray-600">
+            Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
+          </div>
+        </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-700">Overall fit</span>
                   <span className="font-semibold text-indigo-600">10%</span>

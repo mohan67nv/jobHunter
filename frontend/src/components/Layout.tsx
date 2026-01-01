@@ -17,7 +17,6 @@ export default function Layout({ children }: LayoutProps) {
     { path: '/interview-prep', label: 'Interview Prep', icon: Sparkles },
     { path: '/manual-prep', label: 'Manual Prep', icon: Target },
     { path: '/resumes', label: 'Resume Versions', icon: FileText },
-    { path: '/templates', label: 'Templates', icon: Layers },
     { path: '/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/settings', label: 'Profile', icon: Settings },
   ]

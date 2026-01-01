@@ -1,7 +1,7 @@
 """
 AI analysis endpoints - Enhanced with industry-standard ATS scoring
 """
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from pydantic import BaseModel
@@ -11,7 +11,9 @@ from models.user import UserProfile
 from schemas.analysis import AnalysisRequest, AnalysisResponse
 from ai_agents.agent_manager import AgentManager
 from ai_agents.enhanced_ats_scorer import EnhancedATSScorer
+from ai_agents.multi_layer_ats import MultiLayerATSScorer
 from utils.logger import setup_logger
+from utils.pdf_parser import PDFParser
 
 router = APIRouter(prefix="/api/analysis", tags=["analysis"])
 logger = setup_logger(__name__)
@@ -274,12 +276,17 @@ def compare_custom_cv_jd(
     db: Session = Depends(get_db)
 ):
     """
-    Compare custom CV text with job description (without saving to database)
+    Compare custom CV text with job description using Multi-Layer ATS Scoring
     
     - **resume_text**: Your resume/CV text
     - **job_description**: Job description to compare against
     
-    Returns match analysis with score, matching skills, gaps, and recommendations
+    Uses 3-layer ATS scoring:
+    - Layer 1: DeepSeek-V3.2 (30%) - Fast baseline
+    - Layer 2: GPT-5-mini (40%) - Validation (highest weight)
+    - Layer 3: DeepSeek-R1 (30%) - Deep reasoning
+    
+    Returns match analysis with multi-layer score, matching skills, gaps, and recommendations
     """
     try:
         from ai_agents.jd_analyzer import JDAnalyzer
@@ -291,7 +298,7 @@ def compare_custom_cv_jd(
         if not request.job_description or not request.job_description.strip():
             raise HTTPException(status_code=400, detail="Job description is required")
         
-        logger.info("🔍 Analyzing custom CV-JD comparison...")
+        logger.info("🔍 Analyzing custom CV-JD comparison with Multi-Layer ATS...")
         
         # Step 1: Analyze job description
         jd_analyzer = JDAnalyzer()
@@ -301,15 +308,24 @@ def compare_custom_cv_jd(
         matcher = ResumeMatcher()
         match_result = matcher.process(request.resume_text, request.job_description, jd_analysis)
         
-        # Step 3: Calculate ATS score
-        ats_scorer = EnhancedATSScorer()
-        ats_result = ats_scorer.process(request.resume_text, request.job_description)
+        # Step 3: Multi-Layer ATS Scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+        multi_layer_scorer = MultiLayerATSScorer(use_multi_layer=True)
+        ats_result = multi_layer_scorer.assess_resume(request.resume_text, request.job_description)
         
-        logger.info(f"✅ Custom comparison complete: Match {match_result['match_score']}%, ATS {ats_result['ats_score']}%")
+        logger.info(f"✅ Custom comparison complete: Match {match_result['match_score']}%, Multi-Layer ATS {ats_result.get('final_score', 0)}%")
+        logger.info(f"   Layer breakdown: L1={ats_result.get('layer1_score', 0)}%, L2={ats_result.get('layer2_score', 0)}%, L3={ats_result.get('layer3_score', 0)}%")
         
         return {
             "match_score": match_result['match_score'],
-            "ats_score": ats_result['ats_score'],
+            "ats_score": ats_result.get('final_score', 0),
+            "multi_layer_breakdown": {
+                "layer1_baseline": ats_result.get('layer1_score', 0),
+                "layer1_weight": "30%",
+                "layer2_validation": ats_result.get('layer2_score', 0),
+                "layer2_weight": "40%",
+                "layer3_reasoning": ats_result.get('layer3_score', 0),
+                "layer3_weight": "30%"
+            },
             "keyword_density": ats_result.get('keyword_analysis', {}).get('keyword_match_rate', 0),
             "matching_skills": match_result['matching_skills'],
             "missing_skills": match_result['missing_skills'],
@@ -318,6 +334,7 @@ def compare_custom_cv_jd(
             "strengths": match_result['strengths'],
             "concerns": match_result['concerns'],
             "overall_assessment": match_result['overall_assessment'],
+            "recommendations": ats_result.get('recommendations', []),
             "ats_details": {
                 "keyword_analysis": ats_result.get('keyword_analysis', {}),
                 "font_check": ats_result.get('font_check', {}),
@@ -337,3 +354,50 @@ def compare_custom_cv_jd(
     except Exception as e:
         logger.error(f"Custom CV-JD comparison failed: {e}")
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
+
+
+@router.post("/parse-resume-pdf")
+async def parse_resume_pdf(
+    file: UploadFile = File(...),
+):
+    """
+    Parse PDF resume using GPT-5-mini for intelligent text extraction
+    
+    - **file**: PDF file to parse
+    
+    Returns cleaned and structured resume text
+    """
+    try:
+        if not file.filename.endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Only PDF files are supported")
+        
+        # Read PDF bytes
+        pdf_bytes = await file.read()
+        
+        if len(pdf_bytes) > 10 * 1024 * 1024:  # 10MB limit
+            raise HTTPException(status_code=400, detail="PDF file too large (max 10MB)")
+        
+        logger.info(f"📄 Parsing PDF resume: {file.filename} ({len(pdf_bytes)} bytes)")
+        
+        # Parse PDF with GPT-5-mini
+        pdf_parser = PDFParser()
+        resume_text = pdf_parser.process(pdf_bytes)
+        
+        if not resume_text or len(resume_text.strip()) < 50:
+            raise HTTPException(status_code=400, detail="Could not extract text from PDF")
+        
+        logger.info(f"✅ PDF parsed successfully: {len(resume_text)} characters extracted")
+        
+        return {
+            "resume_text": resume_text,
+            "filename": file.filename,
+            "size_bytes": len(pdf_bytes),
+            "extracted_length": len(resume_text),
+            "message": "PDF parsed successfully with GPT-5-mini"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ PDF parsing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to parse PDF: {str(e)}")
