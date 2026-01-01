@@ -25,10 +25,23 @@ class ResumeOptimizer(BaseAgent):
         super().__init__(preferred_provider="openai", model="gpt-5-mini")
         logger.info("✅ ResumeOptimizer initialized with GPT-5-mini")
     
-    def process(self, resume_text: str, job_description: str, missing_keywords: List[str]) -> Dict:
+    def process(self, resume_text: str, job_description: str, missing_keywords: List) -> Dict:
         """
         Main processing: Generate all optimization suggestions
+        
+        Args:
+            missing_keywords: List of dicts with 'keyword' field OR list of strings
         """
+        # Extract keyword strings if they're dicts
+        keyword_strings = []
+        for item in missing_keywords:
+            if isinstance(item, dict):
+                keyword_strings.append(item.get('keyword', ''))
+            elif isinstance(item, str):
+                keyword_strings.append(item)
+        
+        keyword_strings = [k for k in keyword_strings if k]  # Remove empty strings
+        
         # Extract CV structure
         cv_analysis = self._extract_cv_structure(resume_text)
         
@@ -37,12 +50,12 @@ class ResumeOptimizer(BaseAgent):
         
         # Generate experience bullets mapped to CV companies
         experience_bullets = self._generate_experience_bullets(
-            resume_text, job_description, missing_keywords, cv_analysis
+            resume_text, job_description, keyword_strings, cv_analysis
         )
         
         # Generate skills section suggestions
         skills_suggestions = self._generate_skills_suggestions(
-            resume_text, job_description, missing_keywords
+            resume_text, job_description, keyword_strings
         )
         
         return {
@@ -318,7 +331,7 @@ Focus on:
         
         return parsed
     
-    def _generate_generic_bullets(self, missing_keywords: List[str]) -> List[Dict]:
+    def _generate_generic_bullets(self, missing_keywords: List) -> List[Dict]:
         """Fallback generic bullets if CV parsing fails"""
         bullets = []
         for keyword in missing_keywords[:5]:
