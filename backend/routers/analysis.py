@@ -308,9 +308,16 @@ def compare_custom_cv_jd(
         matcher = ResumeMatcher()
         match_result = matcher.process(request.resume_text, request.job_description, jd_analysis)
         
-        # Step 3: Multi-Layer ATS Scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
-        multi_layer_scorer = MultiLayerATSScorer(use_multi_layer=True)
-        ats_result = multi_layer_scorer.assess_resume(request.resume_text, request.job_description)
+        # Step 3: Anonymize resume before sending to LLMs (security)
+        from utils.anonymizer import get_anonymizer
+        anonymizer = get_anonymizer()
+        anon_result = anonymizer.anonymize(request.resume_text)
+        anonymized_resume = anon_result['anonymized_text']
+        logger.info(f"🔒 Anonymized resume: {len(anon_result['removed_pii'])} PII items removed")
+        
+        # Step 4: Multi-Layer ATS Scoring (DeepSeek + GPT-5-mini + DeepSeek Reasoner)
+        multi_layer_scorer = MultiLayerATSScorer()
+        ats_result = multi_layer_scorer.assess_resume(anonymized_resume, request.job_description)
         
         logger.info(f"✅ Custom comparison complete: Match {match_result['match_score']}%, Multi-Layer ATS {ats_result.get('final_score', 0)}%")
         logger.info(f"   Layer breakdown: L1={ats_result.get('layer1_score', 0)}%, L2={ats_result.get('layer2_score', 0)}%, L3={ats_result.get('layer3_score', 0)}%")

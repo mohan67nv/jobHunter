@@ -190,6 +190,48 @@ export default function CompareResume() {
           </div>
         </div>
 
+        {/* Analyze Button */}
+        <div className="text-center mb-8">
+          <button
+            onClick={handleAnalyze}
+            disabled={compareMutation.isPending || !cvText.trim() || !jdText.trim()}
+            className="px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg hover:shadow-xl flex items-center mx-auto gap-3"
+          >
+            {compareMutation.isPending ? (
+              <>
+                <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div>
+                Analyzing with AI...
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5" />
+                Analyze with AI
+              </>
+            )}
+          </button>
+          {(!cvText.trim() || !jdText.trim()) && (
+            <p className="mt-3 text-sm text-gray-500">Enter both resume and job description to analyze</p>
+          )}
+        </div>
+
+        {/* Analyze Button - Moved up for better UX */}
+        <div className="text-center mb-8">
+          <button
+            onClick={handleAnalyze}
+            disabled={analyzeMutation.isPending || !resumeText || !jdText}
+            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold shadow-lg"
+          >
+            <Sparkles className="h-6 w-6" />
+            {analyzeMutation.isPending ? 'Analyzing with AI...' : 'Analyze with AI'}
+          </button>
+          <p className="text-sm text-gray-500 mt-2">
+            Powered by Multi-Layer ATS: DeepSeek + GPT-5-mini
+          </p>
+          {(!resumeText || !jdText) && (
+            <p className="text-sm text-amber-600 mt-2">⚠️ Enter both resume and job description to analyze</p>
+          )}
+        </div>
+
         {/* Scoring Rules Info */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -226,54 +268,59 @@ export default function CompareResume() {
             Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
           </div>
         </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Overall fit</span>
-                  <span className="font-semibold text-indigo-600">10%</span>
-                </div>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4">
-              <h4 className="font-semibold text-gray-900 mb-3">ATS Score (42 checks):</h4>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Keywords analysis</span>
-                  <span className="font-semibold text-blue-600">40%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Structure & content</span>
-                  <span className="font-semibold text-green-600">20%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Fonts & formatting</span>
-                  <span className="font-semibold text-purple-600">15%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-700">Layout & page setup</span>
-                  <span className="font-semibold text-indigo-600">25%</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Analyze Button */}
-        <div className="text-center mb-8">
-          <button
-            onClick={handleAnalyze}
-            disabled={analyzeMutation.isPending || !resumeText || !jdText}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold shadow-lg"
-          >
-            <Sparkles className="h-6 w-6" />
-            {analyzeMutation.isPending ? 'Analyzing with AI...' : 'Analyze with AI'}
-          </button>
-          <p className="text-sm text-gray-500 mt-2">
-            Powered by GPT-5 Mini, Gemini 2.0 Flash & Perplexity AI
-          </p>
-        </div>
 
         {/* Results */}
         {analysis && (
           <div className="space-y-6 animate-fadeIn">
+            {/* 43-Point ATS Criteria Info */}
+            <div className="bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                43-Point ATS Assessment Criteria
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm text-gray-700">
+                <div className="bg-white rounded p-3">
+                  <h4 className="font-semibold text-green-900 mb-2">Keywords (12 checks)</h4>
+                  <div className="space-y-1">
+                    <div>• Keyword density</div>
+                    <div>• Skills match</div>
+                    <div>• Technical terms</div>
+                    <div>• Industry jargon</div>
+                  </div>
+                </div>
+                <div className="bg-white rounded p-3">
+                  <h4 className="font-semibold text-blue-900 mb-2">Fonts & Text (11 checks)</h4>
+                  <div className="space-y-1">
+                    <div>• Font readability</div>
+                    <div>• Font size</div>
+                    <div>• Special characters</div>
+                    <div>• Text formatting</div>
+                  </div>
+                </div>
+                <div className="bg-white rounded p-3">
+                  <h4 className="font-semibold text-purple-900 mb-2">Layout (10 checks)</h4>
+                  <div className="space-y-1">
+                    <div>• Section headers</div>
+                    <div>• Bullet points</div>
+                    <div>• Tables & columns</div>
+                    <div>• Graphics usage</div>
+                  </div>
+                </div>
+                <div className="bg-white rounded p-3">
+                  <h4 className="font-semibold text-indigo-900 mb-2">Structure (10 checks)</h4>
+                  <div className="space-y-1">
+                    <div>• Contact info</div>
+                    <div>• Experience format</div>
+                    <div>• Date formatting</div>
+                    <div>• File metadata</div>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 text-center text-sm text-gray-600">
+                Complete industry-standard ATS compatibility check covering all major tracking systems
+              </div>
+            </div>
+
             {/* Match Score Card */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
