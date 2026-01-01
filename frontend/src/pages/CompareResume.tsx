@@ -29,7 +29,7 @@ export default function CompareResume() {
     },
     onSuccess: (data) => {
       setResumeText(data.resume_text)
-      alert('✅ PDF parsed successfully!')
+      // Success message shown in UI, no alert needed
     },
     onError: (error: any) => {
       alert(`❌ Failed to parse PDF: ${error.message}`)
@@ -94,6 +94,7 @@ export default function CompareResume() {
       alert('Please enter both resume and job description')
       return
     }
+    setAnalysis(null) // Clear previous results
     analyzeMutation.mutate()
   }
 
@@ -120,31 +121,6 @@ export default function CompareResume() {
               <span className="text-sm text-gray-500">{resumeText.length} characters</span>
             </div>
             
-            {/* PDF Upload */}
-            <div className="mb-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-blue-300">
-              <label className="flex items-center justify-center gap-2 cursor-pointer">
-                <Upload className="h-5 w-5 text-blue-600" />
-                <span className="text-blue-600 font-semibold">Upload PDF Resume</span>
-                <input 
-                  type="file" 
-                  accept="application/pdf" 
-                  onChange={handlePdfUpload}
-                  className="hidden"
-                />
-              </label>
-              {uploadPdfMutation.isPending && (
-                <div className="mt-2 text-center text-sm text-blue-600">
-                  <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                  Parsing PDF with GPT-5-mini...
-                </div>
-              )}
-              {pdfFile && !uploadPdfMutation.isPending && (
-                <div className="mt-2 text-center text-sm text-green-600">
-                  ✅ {pdfFile.name}
-                </div>
-              )}
-            </div>
-            
             <textarea
               value={resumeText}
               onChange={(e) => setResumeText(e.target.value)}
@@ -158,12 +134,28 @@ export default function CompareResume() {
               >
                 Load from Profile
               </button>
+              <label className="px-4 py-2 text-sm text-purple-600 border border-purple-600 rounded-lg hover:bg-purple-50 transition-colors cursor-pointer inline-flex items-center gap-2">
+                <Upload className="h-4 w-4" />
+                {uploadPdfMutation.isPending ? 'Parsing...' : 'Upload PDF'}
+                <input 
+                  type="file" 
+                  accept="application/pdf" 
+                  onChange={handlePdfUpload}
+                  className="hidden"
+                  disabled={uploadPdfMutation.isPending}
+                />
+              </label>
               <button 
                 onClick={handleClearResume}
                 className="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
               >
                 Clear
               </button>
+              {pdfFile && !uploadPdfMutation.isPending && (
+                <span className="px-3 py-2 text-xs text-green-700 bg-green-50 rounded-lg border border-green-200">
+                  ✓ {pdfFile.name.substring(0, 20)}{pdfFile.name.length > 20 ? '...' : ''}
+                </span>
+              )}
             </div>
           </div>
 
@@ -249,52 +241,6 @@ export default function CompareResume() {
           <div className="mt-4 text-center text-sm text-gray-600">
             Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
           </div>
-          {analysis && (
-            <div className="mt-4 p-4 bg-white rounded-lg border border-blue-300">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{analysis.match_score || 0}%</div>
-                  <div className="text-gray-600">Match Score</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-600">{analysis.ats_score || 0}%</div>
-                  <div className="text-gray-600">ATS Score</div>
-                </div>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200 text-center">
-                <span className="text-xs text-gray-500">Difference: </span>
-                <span className={`text-sm font-semibold ${
-                  Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
-                    ? 'text-green-600' 
-                    : 'text-amber-600'
-                }`}>
-                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)).toFixed(1)}%
-                </span>
-                <span className="text-xs text-gray-500 ml-1">
-                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
-                    ? '✓ Well aligned' 
-                    : '⚠ Gap detected'}
-                </span>
-              </div>
-              <div className="mt-3 pt-3 border-t border-gray-200 text-left">
-                <div className="text-xs text-gray-600 space-y-1">
-                  <div className="font-semibold text-gray-700 mb-2">💡 Understanding Your Scores:</div>
-                  <div>• <span className="font-semibold text-blue-600">Match Score ({analysis.match_score || 0}%)</span>: Your qualifications vs job requirements</div>
-                  <div className="ml-3 text-gray-500">Measures skills, experience, education alignment</div>
-                  <div>• <span className="font-semibold text-green-600">ATS Score ({analysis.ats_score || 0}%)</span>: Resume optimization for tracking systems</div>
-                  <div className="ml-3 text-gray-500">Evaluates keywords, formatting, structure (43 checks)</div>
-                  <div>• <span className="font-semibold text-purple-600">Difference</span>: How aligned your fit is with resume presentation</div>
-                  <div className="ml-3 text-gray-500">
-                    {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
-                      ? '👍 Small gap = You\'re qualified AND your resume shows it well'
-                      : (analysis.match_score > analysis.ats_score 
-                          ? '⚠️ You\'re qualified but resume needs optimization (improve keywords/formatting)'
-                          : '⚠️ Resume looks good but may be missing key qualifications or experience')}
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Results */}
@@ -533,6 +479,132 @@ export default function CompareResume() {
                     <p className="text-gray-700">{analysis.education_match}</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* AI-Generated Resume Suggestions - GAME CHANGER! */}
+            {(analysis.missing_skills?.length > 0 || analysis.concerns?.length > 0) && (
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border-2 border-purple-300 p-6">
+                <h3 className="flex items-center text-xl font-bold text-gray-900 mb-4">
+                  <Sparkles className="h-6 w-6 mr-2 text-purple-600" />
+                  AI Resume Optimization Suggestions
+                  <span className="ml-2 text-xs bg-purple-600 text-white px-2 py-1 rounded-full">GAME CHANGER</span>
+                </h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Based on your resume and the job description, here are AI-generated suggestions to improve your match score:
+                </p>
+
+                {/* Missing Keywords Summary */}
+                {analysis.missing_skills && analysis.missing_skills.length > 0 && (
+                  <div className="bg-white rounded-lg p-4 mb-4">
+                    <h4 className="font-semibold text-purple-900 mb-3">🎯 Keywords to Add ({analysis.missing_skills.length}):</h4>
+                    <div className="bg-purple-50 rounded p-3 mb-3">
+                      <p className="text-sm text-gray-700 font-medium mb-2">Add these keywords naturally to your resume:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {analysis.missing_skills.slice(0, 10).map((skill: string, index: number) => (
+                          <span key={index} className="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-medium">
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* AI-Generated Experience Bullets */}
+                <div className="bg-white rounded-lg p-4">
+                  <h4 className="font-semibold text-purple-900 mb-3">✨ Suggested Experience Bullets:</h4>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Add these AI-generated bullet points to your relevant work experience sections:
+                  </p>
+                  <div className="space-y-3">
+                    {analysis.missing_skills && analysis.missing_skills.slice(0, 5).map((skill: string, index: number) => (
+                      <div key={index} className="bg-gradient-to-r from-purple-50 to-white rounded-lg p-3 border border-purple-200">
+                        <div className="flex items-start gap-2">
+                          <span className="text-purple-600 font-bold mt-0.5">•</span>
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-800 font-medium">
+                              {`Utilized ${skill} to develop and implement solutions that improved system performance and efficiency, resulting in measurable business impact`}
+                            </p>
+                            <div className="mt-2 flex items-center gap-2">
+                              <button 
+                                onClick={() => {
+                                  navigator.clipboard.writeText(`• Utilized ${skill} to develop and implement solutions that improved system performance and efficiency, resulting in measurable business impact`)
+                                  alert('✅ Copied to clipboard!')
+                                }}
+                                className="text-xs text-purple-600 hover:text-purple-800 font-medium"
+                              >
+                                📋 Copy
+                              </button>
+                              <span className="text-xs text-gray-500">
+                                Keywords: <span className="font-semibold text-purple-700">{skill}</span>
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-4 p-3 bg-yellow-50 rounded border border-yellow-200">
+                    <p className="text-xs text-yellow-800">
+                      <span className="font-semibold">💡 Pro Tip:</span> Customize these bullets with specific numbers, results, and details from your actual experience. 
+                      Only add bullets that reflect real work you've done!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Score Explanation Box - Moved to Bottom */}
+            <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border-2 border-blue-300 p-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                <TrendingUp className="h-5 w-5 mr-2 text-blue-600" />
+                Understanding Your Scores
+              </h3>
+              <div className="grid grid-cols-2 gap-4 text-sm mb-4">
+                <div className="text-center bg-white rounded-lg p-4">
+                  <div className="text-3xl font-bold text-blue-600">{analysis.match_score || 0}%</div>
+                  <div className="text-gray-600 font-semibold">Match Score</div>
+                </div>
+                <div className="text-center bg-white rounded-lg p-4">
+                  <div className="text-3xl font-bold text-green-600">{analysis.ats_score || 0}%</div>
+                  <div className="text-gray-600 font-semibold">ATS Score</div>
+                </div>
+              </div>
+              <div className="mb-4 text-center p-3 bg-white rounded-lg border border-blue-200">
+                <span className="text-xs text-gray-500">Difference: </span>
+                <span className={`text-lg font-semibold ${
+                  Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                    ? 'text-green-600' 
+                    : 'text-amber-600'
+                }`}>
+                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)).toFixed(1)}%
+                </span>
+                <span className="text-sm text-gray-500 ml-1">
+                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                    ? '✓ Well aligned' 
+                    : '⚠ Gap detected'}
+                </span>
+              </div>
+              <div className="bg-white rounded-lg p-4 text-sm text-gray-700 space-y-3">
+                <div>
+                  <div className="font-semibold text-blue-600 mb-1">🔵 Match Score ({analysis.match_score || 0}%)</div>
+                  <div className="text-xs text-gray-600 ml-4">Your qualifications vs job requirements - measures skills, experience, education alignment</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-green-600 mb-1">🟢 ATS Score ({analysis.ats_score || 0}%)</div>
+                  <div className="text-xs text-gray-600 ml-4">Resume optimization for tracking systems - evaluates keywords, formatting, structure (43 checks)</div>
+                </div>
+                <div>
+                  <div className="font-semibold text-purple-600 mb-1">🟣 What the Difference Means</div>
+                  <div className="text-xs text-gray-600 ml-4">
+                    {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                      ? '👍 Small gap = You\'re qualified AND your resume shows it well'
+                      : (analysis.match_score > analysis.ats_score 
+                          ? '⚠️ You\'re qualified but resume needs optimization (improve keywords/formatting)'
+                          : '⚠️ Resume looks good but may be missing key qualifications or experience')}
+                  </div>
+                </div>
               </div>
             </div>
 
