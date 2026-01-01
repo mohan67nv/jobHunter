@@ -370,6 +370,12 @@ def compare_custom_cv_jd(
         multi_layer_scorer = MultiLayerATSScorer()
         ats_result = multi_layer_scorer.assess_resume(anonymized_resume, request.job_description)
         
+        # Extract individual layer scores from layer_scores array
+        layer_scores = ats_result.get('layer_scores', [])
+        layer1_score = layer_scores[0]['score'] if len(layer_scores) > 0 else 0
+        layer2_score = layer_scores[1]['score'] if len(layer_scores) > 1 else 0
+        layer3_score = layer_scores[2]['score'] if len(layer_scores) > 2 else 0
+        
         # Step 8: Advanced Resume Optimization (JD-specific summary, experience bullets, skills)
         logger.info("✨ Step 8/8: Generating advanced resume optimizations...")
         resume_optimizer = ResumeOptimizer()
@@ -431,9 +437,9 @@ def compare_custom_cv_jd(
                     "score": ats_result.get('final_score', 0),
                     "method": "3-Layer AI (Optimistic)",
                     "description": "DeepSeek-V3.2 + GPT-5-mini + DeepSeek-R1",
-                    "layer1": ats_result.get('layer1_score', 0),
-                    "layer2": ats_result.get('layer2_score', 0),
-                    "layer3": ats_result.get('layer3_score', 0),
+                    "layer1": layer1_score,
+                    "layer2": layer2_score,
+                    "layer3": layer3_score,
                     "is_primary": False
                 },
                 "recommendation": f"Use Real ATS Score ({real_ats_score}%) as primary - it matches industry ATS systems exactly"
@@ -441,11 +447,11 @@ def compare_custom_cv_jd(
             
             # Multi-layer breakdown (for reference only)
             "multi_layer_breakdown": {
-                "layer1_baseline": ats_result.get('layer1_score', 0),
+                "layer1_baseline": layer1_score,
                 "layer1_weight": "30%",
-                "layer2_validation": ats_result.get('layer2_score', 0),
+                "layer2_validation": layer2_score,
                 "layer2_weight": "40%",
-                "layer3_reasoning": ats_result.get('layer3_score', 0),
+                "layer3_reasoning": layer3_score,
                 "layer3_weight": "30%",
                 "note": "Multi-layer gives optimistic score. Main ATS score above is from realistic keyword analysis."
             },
