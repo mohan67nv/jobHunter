@@ -276,6 +276,23 @@ export default function CompareResume() {
                     : '⚠ Gap detected'}
                 </span>
               </div>
+              <div className="mt-3 pt-3 border-t border-gray-200 text-left">
+                <div className="text-xs text-gray-600 space-y-1">
+                  <div className="font-semibold text-gray-700 mb-2">💡 Understanding Your Scores:</div>
+                  <div>• <span className="font-semibold text-blue-600">Match Score ({analysis.match_score || 0}%)</span>: Your qualifications vs job requirements</div>
+                  <div className="ml-3 text-gray-500">Measures skills, experience, education alignment</div>
+                  <div>• <span className="font-semibold text-green-600">ATS Score ({analysis.ats_score || 0}%)</span>: Resume optimization for tracking systems</div>
+                  <div className="ml-3 text-gray-500">Evaluates keywords, formatting, structure (43 checks)</div>
+                  <div>• <span className="font-semibold text-purple-600">Difference</span>: How aligned your fit is with resume presentation</div>
+                  <div className="ml-3 text-gray-500">
+                    {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                      ? '👍 Small gap = You\'re qualified AND your resume shows it well'
+                      : (analysis.match_score > analysis.ats_score 
+                          ? '⚠️ You\'re qualified but resume needs optimization (improve keywords/formatting)'
+                          : '⚠️ Resume looks good but may be missing key qualifications or experience')}
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>

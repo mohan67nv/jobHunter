@@ -142,6 +142,14 @@ class MultiLayerATSScorer:
             layer1_result, layer2_result, layer3_result
         )
         
+        # Include keyword analysis from Layer 1
+        results['keyword_analysis'] = {
+            'keyword_match_rate': layer1_result.get('keyword_match_percent', 0),
+            'keywords_matched': layer1_result.get('keywords_matched', 0),
+            'keywords_total': layer1_result.get('keywords_total', 0),
+            'missing_keywords': layer1_result.get('missing_keywords', [])
+        }
+        
         # Include full detailed feedback (no tier restrictions for personal use)
         if layer3_result.get('feedback'):
             results['detailed_feedback'] = layer3_result['feedback']
