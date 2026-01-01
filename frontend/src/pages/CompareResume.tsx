@@ -528,11 +528,6 @@ export default function CompareResume() {
                   ))}
                 </div>
               </div>
-                      ○ {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
             </div>
 
             {/* ATS Detailed Analysis */}
