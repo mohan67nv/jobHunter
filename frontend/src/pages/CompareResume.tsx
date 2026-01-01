@@ -214,24 +214,6 @@ export default function CompareResume() {
           )}
         </div>
 
-        {/* Analyze Button - Moved up for better UX */}
-        <div className="text-center mb-8">
-          <button
-            onClick={handleAnalyze}
-            disabled={analyzeMutation.isPending || !resumeText || !jdText}
-            className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-lg font-semibold shadow-lg"
-          >
-            <Sparkles className="h-6 w-6" />
-            {analyzeMutation.isPending ? 'Analyzing with AI...' : 'Analyze with AI'}
-          </button>
-          <p className="text-sm text-gray-500 mt-2">
-            Powered by Multi-Layer ATS: DeepSeek + GPT-5-mini
-          </p>
-          {(!resumeText || !jdText) && (
-            <p className="text-sm text-amber-600 mt-2">⚠️ Enter both resume and job description to analyze</p>
-          )}
-        </div>
-
         {/* Scoring Rules Info */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6 mb-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -267,6 +249,35 @@ export default function CompareResume() {
           <div className="mt-4 text-center text-sm text-gray-600">
             Final Score = (Layer 1 × 30%) + (Layer 2 × 40%) + (Layer 3 × 30%)
           </div>
+          {analysis && (
+            <div className="mt-4 p-4 bg-white rounded-lg border border-blue-300">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">{analysis.match_score || 0}%</div>
+                  <div className="text-gray-600">Match Score</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">{analysis.ats_score || 0}%</div>
+                  <div className="text-gray-600">ATS Score</div>
+                </div>
+              </div>
+              <div className="mt-3 pt-3 border-t border-gray-200 text-center">
+                <span className="text-xs text-gray-500">Difference: </span>
+                <span className={`text-sm font-semibold ${
+                  Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                    ? 'text-green-600' 
+                    : 'text-amber-600'
+                }`}>
+                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)).toFixed(1)}%
+                </span>
+                <span className="text-xs text-gray-500 ml-1">
+                  {Math.abs((analysis.match_score || 0) - (analysis.ats_score || 0)) < 10 
+                    ? '✓ Well aligned' 
+                    : '⚠ Gap detected'}
+                </span>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Results */}

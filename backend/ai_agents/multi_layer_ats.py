@@ -19,6 +19,13 @@ from utils.logger import setup_logger
 logger = setup_logger(__name__)
 
 
+class SimpleAgent(BaseAgent):
+    """Concrete BaseAgent implementation for direct AI calls"""
+    def process(self, *args, **kwargs):
+        """Direct passthrough - not used, we call generate() directly"""
+        pass
+
+
 class MultiLayerATSScorer:
     """
     Industry-standard multi-layer ATS scoring system
@@ -29,24 +36,24 @@ class MultiLayerATSScorer:
         """Initialize all 3 layers with their respective models"""
         # Layer 1: Fast baseline (DeepSeek Chat V3)
         layer1_config = get_model_config('MultiLayerATS_Layer1')
-        self.layer1_agent = BaseAgent.__new__(BaseAgent)
-        self.layer1_agent.preferred_provider = layer1_config['provider']
-        self.layer1_agent.model = layer1_config['model']
-        self.layer1_agent.providers = self.layer1_agent._initialize_providers()
+        self.layer1_agent = SimpleAgent(
+            preferred_provider=layer1_config['provider'],
+            model=layer1_config['model']
+        )
         
         # Layer 2: Validation (GPT-5-mini)
         layer2_config = get_model_config('MultiLayerATS_Layer2')
-        self.layer2_agent = BaseAgent.__new__(BaseAgent)
-        self.layer2_agent.preferred_provider = layer2_config['provider']
-        self.layer2_agent.model = layer2_config['model']
-        self.layer2_agent.providers = self.layer2_agent._initialize_providers()
+        self.layer2_agent = SimpleAgent(
+            preferred_provider=layer2_config['provider'],
+            model=layer2_config['model']
+        )
         
         # Layer 3: Detailed feedback (DeepSeek Reasoner R1)
         layer3_config = get_model_config('MultiLayerATS_Layer3')
-        self.layer3_agent = BaseAgent.__new__(BaseAgent)
-        self.layer3_agent.preferred_provider = layer3_config['provider']
-        self.layer3_agent.model = layer3_config['model']
-        self.layer3_agent.providers = self.layer3_agent._initialize_providers()
+        self.layer3_agent = SimpleAgent(
+            preferred_provider=layer3_config['provider'],
+            model=layer3_config['model']
+        )
         
         self.cost_tracker = {
             'layer1': 0.0,
