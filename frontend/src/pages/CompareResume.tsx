@@ -295,34 +295,188 @@ export default function CompareResume() {
               </div>
             </div>
 
-            {/* Match Score Card */}
-            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-8">
+            {/* 🎯 THREE-SCORE COMPARISON - INDUSTRY-LEADING */}
+            {analysis.three_score_comparison && (
+              <div className="bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 rounded-lg border-2 border-indigo-300 p-8">
+                <h3 className="text-2xl font-bold text-gray-900 mb-2 text-center">
+                  🎯 Industry-Standard ATS Analysis - 3 Methods Compared
+                </h3>
+                <p className="text-center text-gray-600 mb-6">
+                  {analysis.three_score_comparison.recommendation}
+                </p>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* PRIMARY: Real ATS Score */}
+                  <div className="bg-white rounded-xl border-4 border-green-400 shadow-lg p-6 relative">
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 px-3 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+                      PRIMARY ⭐
+                    </div>
+                    <div className="text-center mt-2">
+                      <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-green-500 to-green-600 text-white text-4xl font-bold mb-3 shadow-lg">
+                        {analysis.three_score_comparison.real_ats_score.score}%
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-1">Real ATS Score</h4>
+                      <p className="text-sm font-semibold text-green-700 mb-2">
+                        {analysis.three_score_comparison.real_ats_score.method}
+                      </p>
+                      <p className="text-xs text-gray-600 mb-4">
+                        {analysis.three_score_comparison.real_ats_score.description}
+                      </p>
+                      
+                      {/* Stats */}
+                      <div className="bg-green-50 rounded-lg p-3 mb-3">
+                        <div className="text-sm font-semibold text-green-900 mb-2">Match Stats:</div>
+                        <div className="text-xs space-y-1 text-left">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Exact Matches:</span>
+                            <span className="font-bold text-green-700">
+                              {analysis.three_score_comparison.real_ats_score.exact_matches}/{analysis.three_score_comparison.real_ats_score.total_keywords}
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Match Rate:</span>
+                            <span className="font-bold text-green-700">
+                              {analysis.three_score_comparison.real_ats_score.match_rate}%
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Resume Words:</span>
+                            <span className="font-bold text-green-700">
+                              {analysis.three_score_comparison.real_ats_score.resume_stats.total_words}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Formula */}
+                      <div className="bg-gray-50 rounded p-2 text-xs text-gray-700">
+                        <div className="font-semibold mb-1">Formula:</div>
+                        <div className="font-mono text-[10px] leading-tight">
+                          {analysis.three_score_comparison.real_ats_score.formula}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Keyword Score */}
+                  <div className="bg-white rounded-xl border-2 border-blue-300 shadow p-6">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 text-white text-4xl font-bold mb-3">
+                        {analysis.three_score_comparison.ai_keyword_score.score}%
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-1">AI Keyword Score</h4>
+                      <p className="text-sm font-semibold text-blue-700 mb-2">
+                        {analysis.three_score_comparison.ai_keyword_score.method}
+                      </p>
+                      <p className="text-xs text-gray-600 mb-4">
+                        {analysis.three_score_comparison.ai_keyword_score.description}
+                      </p>
+                      
+                      {/* Improvement Potential */}
+                      <div className="bg-blue-50 rounded-lg p-3">
+                        <div className="text-sm font-semibold text-blue-900 mb-2">After Fixes:</div>
+                        <div className="text-3xl font-bold text-blue-700 mb-1">
+                          {analysis.three_score_comparison.ai_keyword_score.after_fixes}%
+                        </div>
+                        <div className="text-xs text-green-600 font-semibold">
+                          +{analysis.three_score_comparison.ai_keyword_score.improvement_potential}% improvement
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Multi-Layer Score */}
+                  <div className="bg-white rounded-xl border-2 border-purple-300 shadow p-6">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-28 h-28 rounded-full bg-gradient-to-br from-purple-500 to-purple-600 text-white text-4xl font-bold mb-3">
+                        {analysis.three_score_comparison.multi_layer_score.score}%
+                      </div>
+                      <h4 className="text-lg font-bold text-gray-900 mb-1">Multi-Layer Score</h4>
+                      <p className="text-sm font-semibold text-purple-700 mb-2">
+                        {analysis.three_score_comparison.multi_layer_score.method}
+                      </p>
+                      <p className="text-xs text-gray-600 mb-4">
+                        {analysis.three_score_comparison.multi_layer_score.description}
+                      </p>
+                      
+                      {/* Layer Breakdown */}
+                      <div className="bg-purple-50 rounded-lg p-3 space-y-2">
+                        <div className="text-xs space-y-1 text-left">
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">DeepSeek-V3.2:</span>
+                            <span className="font-bold text-purple-700">
+                              {analysis.three_score_comparison.multi_layer_score.layer1}% (30%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">GPT-5-mini:</span>
+                            <span className="font-bold text-purple-700">
+                              {analysis.three_score_comparison.multi_layer_score.layer2}% (40%)
+                            </span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">DeepSeek-R1:</span>
+                            <span className="font-bold text-purple-700">
+                              {analysis.three_score_comparison.multi_layer_score.layer3}% (30%)
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Explanation */}
+                <div className="mt-6 bg-white rounded-lg p-4 border border-gray-200">
+                  <h4 className="font-bold text-gray-900 mb-2 text-center">📊 Why Three Scores?</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-700">
+                    <div className="text-center">
+                      <div className="font-semibold text-green-700 mb-1">Real ATS (Most Accurate)</div>
+                      <div>Uses exact keyword matching like Workday, Greenhouse, Taleo. Pure math - no AI guessing.</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-blue-700 mb-1">AI Keyword (Conservative)</div>
+                      <div>DeepSeek Reasoner analyzes context and keyword importance. Shows improvement potential.</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="font-semibold text-purple-700 mb-1">Multi-Layer (Optimistic)</div>
+                      <div>3-AI consensus with 43-point checks. Comprehensive but tends to score higher.</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Quick Summary Card */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border border-blue-200 p-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Overall Match */}
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-blue-600 text-white text-4xl font-bold mb-3">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-blue-600 text-white text-3xl font-bold mb-2">
                     {analysis.match_score || 0}%
                   </div>
-                  <p className="text-lg font-semibold text-gray-900">Overall Match</p>
-                  <p className="text-sm text-gray-600">Resume-JD Compatibility</p>
+                  <p className="text-base font-semibold text-gray-900">Overall Match</p>
+                  <p className="text-xs text-gray-600">Resume-JD Compatibility</p>
                 </div>
 
-                {/* ATS Score */}
+                {/* Keyword Density */}
                 <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-green-600 text-white text-4xl font-bold mb-3">
-                    {analysis.ats_score || 0}%
-                  </div>
-                  <p className="text-lg font-semibold text-gray-900">ATS Score</p>
-                  <p className="text-sm text-gray-600">Applicant Tracking System</p>
-                </div>
-
-                {/* Keyword Match */}
-                <div className="text-center">
-                  <div className="inline-flex items-center justify-center w-32 h-32 rounded-full bg-purple-600 text-white text-4xl font-bold mb-3">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-purple-600 text-white text-3xl font-bold mb-2">
                     {analysis.keyword_density || 0}%
                   </div>
-                  <p className="text-lg font-semibold text-gray-900">Keyword Match</p>
-                  <p className="text-sm text-gray-600">JD Keywords Found</p>
+                  <p className="text-base font-semibold text-gray-900">Keyword Density</p>
+                  <p className="text-xs text-gray-600">JD Keywords Found</p>
+                </div>
+
+                {/* Matched Keywords Count */}
+                <div className="text-center">
+                  <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-green-600 text-white text-3xl font-bold mb-2">
+                    {analysis.three_score_comparison?.real_ats_score?.exact_matches || 0}
+                  </div>
+                  <p className="text-base font-semibold text-gray-900">Exact Matches</p>
+                  <p className="text-xs text-gray-600">
+                    of {analysis.three_score_comparison?.real_ats_score?.total_keywords || 0} keywords
+                  </p>
                 </div>
               </div>
             </div>
@@ -352,18 +506,28 @@ export default function CompareResume() {
                 </div>
               </div>
 
-              {/* Missing Skills */}
+              {/* Missing Skills - USE REAL ATS MISSING KEYWORDS */}
               <div className="bg-white rounded-lg border border-gray-200 p-6">
                 <h3 className="flex items-center text-lg font-semibold text-gray-900 mb-4">
                   <AlertCircle className="h-5 w-5 mr-2 text-yellow-600" />
-                  Skills to Add ({analysis.missing_skills?.length || 0})
+                  Skills to Add ({
+                    analysis.three_score_comparison?.real_ats_score?.missing_keywords?.length || 
+                    analysis.missing_skills?.length || 
+                    0
+                  })
                 </h3>
                 <div className="flex flex-wrap gap-2">
-                  {analysis.missing_skills?.map((skill: string, index: number) => (
+                  {/* Use Real ATS missing keywords first, fallback to legacy */}
+                  {(analysis.three_score_comparison?.real_ats_score?.missing_keywords || analysis.missing_skills || []).map((skill: string, index: number) => (
                     <span
                       key={index}
                       className="px-3 py-1 bg-yellow-50 text-yellow-700 rounded-full text-sm font-medium"
                     >
+                      ○ {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
                       ○ {skill}
                     </span>
                   ))}

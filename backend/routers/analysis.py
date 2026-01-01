@@ -346,23 +346,32 @@ def compare_custom_cv_jd(
         anonymized_resume = anon_result['anonymized_text']
         logger.info(f"   ✅ Removed {len(anon_result['removed_pii'])} PII items for security")
         
-        # Step 5: Strategic gap analysis with recommendations (THIS GIVES REALISTIC ATS SCORE)
-        logger.info("💡 Step 5/7: Analyzing keyword gaps and generating recommendations...")
+        # Step 5: REAL RULES-BASED ATS SCORING (exact keyword matching - MOST ACCURATE)
+        logger.info("🎯 Step 5/8: Running REAL Rules-Based ATS Scorer (exact keyword matching)...")
+        from ai_agents.real_ats_scorer import RealATSScorer
+        real_ats = RealATSScorer()
+        real_ats_result = real_ats.score(request.resume_text, request.job_description, jd_keywords)
+        real_ats_score = real_ats_result['ats_score']
+        
+        logger.info(f"   ✅ Real ATS Score: {real_ats_score}% (Rules-based: {real_ats_result['exact_matches']}/{real_ats_result['total_keywords']} keywords matched)")
+        logger.info(f"      Resume stats: {real_ats_result['resume_stats']['total_words']} words")
+        
+        # Step 6: Strategic gap analysis with recommendations (AI-BASED SCORE #1)
+        logger.info("💡 Step 6/8: Analyzing keyword gaps and generating recommendations...")
         gap_analysis = keyword_analyzer.analyze_cv_gaps(request.resume_text, jd_keywords)
         
-        # USE GAP ANALYSIS SCORE AS THE MAIN ATS SCORE (more realistic than multi-layer)
-        realistic_ats_score = gap_analysis.get('current_ats_score', 0)
+        ai_keyword_score = gap_analysis.get('current_ats_score', 0)
         estimated_after_fixes = gap_analysis.get('estimated_score_after_fixes', 0)
         
-        logger.info(f"   🎯 Realistic ATS Score: {realistic_ats_score}% (from deep keyword analysis)")
+        logger.info(f"   🎯 AI Keyword Score: {ai_keyword_score}% (AI-based conservative estimate)")
         
-        # Step 6: Multi-Layer ATS Scoring (for detailed breakdown only - not primary score)
-        logger.info("🏆 Step 6/7: Running 3-layer ATS for detailed breakdown...")
+        # Step 7: Multi-Layer ATS Scoring (AI-BASED SCORE #2 - for detailed breakdown)
+        logger.info("🏆 Step 7/8: Running 3-layer ATS for detailed breakdown...")
         multi_layer_scorer = MultiLayerATSScorer()
         ats_result = multi_layer_scorer.assess_resume(anonymized_resume, request.job_description)
         
-        # Step 7: Advanced Resume Optimization (JD-specific summary, experience bullets, skills)
-        logger.info("✨ Step 7/7: Generating advanced resume optimizations...")
+        # Step 8: Advanced Resume Optimization (JD-specific summary, experience bullets, skills)
+        logger.info("✨ Step 8/8: Generating advanced resume optimizations...")
         resume_optimizer = ResumeOptimizer()
         optimization = resume_optimizer.process(
             request.resume_text,
@@ -370,27 +379,67 @@ def compare_custom_cv_jd(
             gap_analysis.get('missing_critical', [])[:10]
         )
         
-        # Step 8: Generate visual comparison table
+        # Step 9: Generate visual comparison table
         logger.info("📊 Building visual comparison table...")
         comparison_table = keyword_analyzer.generate_comparison_table(jd_keywords, gap_analysis)
         
         elapsed = time.time() - start_time
         
         logger.info(f"✅ COMPREHENSIVE ANALYSIS COMPLETE in {elapsed:.1f}s")
-        logger.info(f"   Match: {match_result['match_score']}% | Realistic ATS: {realistic_ats_score}%")
-        logger.info(f"   Current ATS: {realistic_ats_score}% → After fixes: {estimated_after_fixes}% (+{estimated_after_fixes - realistic_ats_score}%)")
+        logger.info(f"   Match: {match_result['match_score']}%")
+        logger.info(f"   🎯 PRIMARY SCORE (Real ATS): {real_ats_score}% ← Rules-based (most accurate)")
+        logger.info(f"   📊 AI Keyword Score: {ai_keyword_score}% ← Conservative AI estimate")
+        logger.info(f"   🏆 Multi-Layer Score: {ats_result.get('final_score', 0)}% ← Optimistic AI scoring")
+        logger.info(f"   📈 After fixes: {estimated_after_fixes}% (+{estimated_after_fixes - real_ats_score}%)")
         logger.info(f"   Missing critical: {len(gap_analysis.get('missing_critical', []))} | Strategic improvements: {len(gap_analysis.get('strategic_improvements', []))}")
         logger.info(f"   Advanced optimizations: Summary={bool(optimization.get('jd_specific_summary'))}, "
                    f"Experience bullets={len(optimization.get('experience_bullet_suggestions', []))}, "
                    f"Skills={len(optimization.get('skills_section_suggestions', {}).get('hard_skills_to_add', []))}")
         
         return {
-            # Basic scores (USE REALISTIC ATS SCORE FROM KEYWORD ANALYSIS)
+            # 🎯 PRIMARY SCORE: Real ATS (rules-based, exact keyword matching)
+            "ats_score": real_ats_score,  # ← PRIMARY: Real rules-based ATS score
             "match_score": match_result['match_score'],
-            "ats_score": realistic_ats_score,  # ← CHANGED: Use realistic score from keyword analyzer
             "keyword_density": ats_result.get('keyword_analysis', {}).get('keyword_match_rate', 0),
             
-            # Multi-layer breakdown (for reference only - not primary score)
+            # 📊 THREE SCORING METHODS FOR COMPARISON
+            "three_score_comparison": {
+                "real_ats_score": {
+                    "score": real_ats_score,
+                    "method": "Rules-Based (Industry Standard)",
+                    "description": "Exact keyword matching + format checks",
+                    "exact_matches": real_ats_result['exact_matches'],
+                    "total_keywords": real_ats_result['total_keywords'],
+                    "match_rate": real_ats_result['match_rate'],
+                    "keyword_score": real_ats_result['keyword_score'],
+                    "format_score": real_ats_result['format_score'],
+                    "resume_stats": real_ats_result['resume_stats'],
+                    "matched_keywords": real_ats_result['matched_keywords'],
+                    "missing_keywords": real_ats_result['missing_keywords'],
+                    "formula": real_ats_result['breakdown']['formula'],
+                    "is_primary": True
+                },
+                "ai_keyword_score": {
+                    "score": ai_keyword_score,
+                    "method": "AI-Based (Conservative)",
+                    "description": "DeepSeek Reasoner keyword analysis",
+                    "after_fixes": estimated_after_fixes,
+                    "improvement_potential": estimated_after_fixes - ai_keyword_score,
+                    "is_primary": False
+                },
+                "multi_layer_score": {
+                    "score": ats_result.get('final_score', 0),
+                    "method": "3-Layer AI (Optimistic)",
+                    "description": "DeepSeek-V3.2 + GPT-5-mini + DeepSeek-R1",
+                    "layer1": ats_result.get('layer1_score', 0),
+                    "layer2": ats_result.get('layer2_score', 0),
+                    "layer3": ats_result.get('layer3_score', 0),
+                    "is_primary": False
+                },
+                "recommendation": f"Use Real ATS Score ({real_ats_score}%) as primary - it matches industry ATS systems exactly"
+            },
+            
+            # Multi-layer breakdown (for reference only)
             "multi_layer_breakdown": {
                 "layer1_baseline": ats_result.get('layer1_score', 0),
                 "layer1_weight": "30%",
@@ -406,9 +455,9 @@ def compare_custom_cv_jd(
                 "categorized_keywords": jd_keywords,
                 "gap_analysis": gap_analysis,
                 "comparison_table": comparison_table,
-                "current_ats_score": realistic_ats_score,  # ← Consistent with main score
+                "current_ats_score": real_ats_score,  # ← Real ATS score (most accurate)
                 "estimated_score_after_fixes": estimated_after_fixes,
-                "score_improvement_potential": estimated_after_fixes - realistic_ats_score
+                "score_improvement_potential": estimated_after_fixes - real_ats_score
             },
             
             # ADVANCED RESUME OPTIMIZATIONS
