@@ -156,20 +156,20 @@ export default function Dashboard() {
   const activeFilterCount = Object.keys(filters).filter(k => filters[k] !== undefined).length
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Job Dashboard
           </h1>
-          <p className="text-gray-600 mt-2 text-lg">Find your next opportunity with AI-powered insights</p>
+          <p className="text-gray-600 mt-1 sm:mt-2 text-sm sm:text-base lg:text-lg">Find your next opportunity with AI-powered insights</p>
         </div>
         <button
           onClick={() => setIsScrapingOpen(true)}
-          className="mt-4 md:mt-0 flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg"
+          className="flex items-center justify-center space-x-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:from-blue-700 hover:to-purple-700 transition-all shadow-lg text-sm sm:text-base whitespace-nowrap flex-shrink-0"
         >
-          <Play className="h-5 w-5" />
+          <Play className="h-4 w-4 sm:h-5 sm:w-5" />
           <span>Start New Scrape</span>
         </button>
       </div>

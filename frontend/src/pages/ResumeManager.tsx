@@ -18,20 +18,20 @@ export default function ResumeManager() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
-              <FileText className="h-10 w-10 text-blue-600" />
-              Resume Version Control
+      <div className="mb-4 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+              <FileText className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-blue-600 flex-shrink-0" />
+              <span>Resume Version Control</span>
             </h1>
-            <p className="text-gray-600 mt-2 text-lg">
+            <p className="text-gray-600 mt-2 text-sm sm:text-base lg:text-lg">
               Manage multiple resume versions for different job targets
             </p>
           </div>
           <button
             onClick={() => setShowUpload(!showUpload)}
-            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition font-semibold"
+            className="flex items-center justify-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg hover:shadow-lg transition font-semibold text-sm sm:text-base whitespace-nowrap flex-shrink-0"
           >
             <Plus className="h-5 w-5" />
             Upload New Version

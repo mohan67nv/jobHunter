@@ -153,12 +153,12 @@ export default function InterviewPrep() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
-          <Sparkles className="h-10 w-10 text-purple-600" />
-          Interview Preparation
+      <div className="mb-4 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-2 sm:gap-3">
+          <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-purple-600 flex-shrink-0" />
+          <span>Interview Preparation</span>
         </h1>
-        <p className="text-gray-600 mt-2 text-lg">
+        <p className="text-gray-600 mt-2 text-sm sm:text-base lg:text-lg">
           Comprehensive interview prep with company research and Q&A powered by AI
         </p>
       </div>

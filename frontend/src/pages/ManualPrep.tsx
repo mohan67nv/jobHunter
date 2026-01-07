@@ -202,23 +202,23 @@ export default function ManualPrep() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-3">
-              <Sparkles className="h-10 w-10 text-purple-600" />
-              Manual Prep
+      <div className="mb-4 sm:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent flex items-center gap-2 sm:gap-3">
+              <Sparkles className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-purple-600 flex-shrink-0" />
+              <span>Manual Prep</span>
             </h1>
-            <p className="text-gray-600 mt-2 text-lg">
+            <p className="text-gray-600 mt-2 text-sm sm:text-base lg:text-lg">
               Advanced AI-powered interview preparation using DeepSeek models
             </p>
           </div>
           <button
             onClick={() => setShowCreateForm(true)}
-            className="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all flex items-center gap-2 shadow-lg"
+            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all flex items-center justify-center gap-2 shadow-lg text-sm sm:text-base whitespace-nowrap flex-shrink-0"
           >
-            <Plus className="h-5 w-5" />
-            New Prep
+            <Plus className="h-4 w-4 sm:h-5 sm:w-5" />
+            <span>New Prep</span>
           </button>
         </div>
       </div>

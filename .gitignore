@@ -13,9 +13,6 @@ config.local.py
 data/jobhunter.db
 data/*.db
 
-# Documentation archive (old setup files)
-docs/archive/
-
 # Python
 __pycache__/
 *.py[cod]

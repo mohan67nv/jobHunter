@@ -102,15 +102,15 @@ export default function CompareResume() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-7xl mx-auto px-4">
+    <div className="min-h-screen bg-gray-50 py-4 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <FileText className="h-8 w-8 text-blue-600" />
-            Manual Resume-JD Comparison
+        <div className="mb-4 sm:mb-8">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+            <FileText className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-blue-600 flex-shrink-0" />
+            <span>Manual Resume-JD Comparison</span>
           </h1>
-          <p className="text-gray-600 mt-2">
+          <p className="text-gray-600 mt-2 text-sm sm:text-base">
             Compare your resume against any job description with AI-powered analysis
           </p>
         </div>

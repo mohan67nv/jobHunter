@@ -80,12 +80,12 @@ export default function Applications() {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-4xl font-bold text-gray-900 flex items-center gap-3">
-          <CheckSquare className="h-10 w-10 text-green-600" />
-          Application Tracker
+      <div className="mb-4 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 flex items-center gap-2 sm:gap-3">
+          <CheckSquare className="h-7 w-7 sm:h-8 sm:w-8 lg:h-10 lg:w-10 text-green-600 flex-shrink-0" />
+          <span>Application Tracker</span>
         </h1>
-        <p className="text-gray-600 mt-2 text-lg">
+        <p className="text-gray-600 mt-2 text-sm sm:text-base lg:text-lg">
           Track your job applications through the entire process
         </p>
       </div>
